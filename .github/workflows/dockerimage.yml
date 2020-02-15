@@ -1,0 +1,18 @@
+name: Docker Image
+
+on: [push]
+
+jobs:
+  build_push:
+    runs-on: ubuntu-latest
+    env:
+      token: ${{ secrets.GITHUB_TOKEN }}
+      package: docker.pkg.github.com/magic-bots/xenon-worker/xenon-worker
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to Github packages
+        run: docker login docker.pkg.github.com --username Merlintor --password $token
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag $package:${GITHUB_REF##*/}
+      - name: Push the Docker image
+        run: docker push $package:${GITHUB_REF##*/}

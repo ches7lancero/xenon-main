@@ -7,6 +7,11 @@ class TestModule(Module):
         await ctx.send("YEET!")
 
     @Module.command()
-    async def channels(self, ctx):
+    async def channel(self, ctx):
         channel = await ctx.get_channel()
         await ctx.send(channel.name)
+
+    @Module.command()
+    async def guild(self, ctx):
+        guild = await ctx.get_guild()
+        await ctx.send(guild.name)

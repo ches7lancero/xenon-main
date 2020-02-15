@@ -9,9 +9,17 @@ class TestModule(Module):
     @Module.command()
     async def channel(self, ctx):
         channel = await ctx.get_channel()
-        await ctx.send(channel.name)
+        if channel is None:
+            await ctx.send(":(")
+
+        else:
+            await ctx.send(channel.name)
 
     @Module.command()
     async def guild(self, ctx):
         guild = await ctx.get_guild()
-        await ctx.send(guild.name)
+        if guild is None:
+            await ctx.send(guild.name)
+
+        else:
+            await ctx.send(guild.name)

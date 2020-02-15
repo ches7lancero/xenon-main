@@ -30,7 +30,7 @@ class TestModule(Module):
 
     @Module.command()
     async def bot(self, ctx):
-        bot = await ctx.bot.get_bot_member()
+        bot = await ctx.bot.get_bot_member(ctx.guild_id)
         if bot is None:
             await ctx.send(":(")
 

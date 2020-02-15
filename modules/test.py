@@ -19,7 +19,16 @@ class TestModule(Module):
     async def guild(self, ctx):
         guild = await ctx.get_guild()
         if guild is None:
-            await ctx.send(guild.name)
+            await ctx.send(":(")
 
         else:
             await ctx.send(guild.name)
+
+    @Module.command()
+    async def bot(self, ctx):
+        bot = await ctx.bot.get_bot_member()
+        if bot is None:
+            await ctx.send(":(")
+
+        else:
+            await ctx.send(bot.name)

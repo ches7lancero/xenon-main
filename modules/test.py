@@ -7,6 +7,10 @@ class TestModule(Module):
         await ctx.send("YEET!")
 
     @Module.command()
+    async def author(self, ctx):
+        await ctx.send(ctx.author.name)
+
+    @Module.command()
     async def channel(self, ctx):
         channel = await ctx.get_channel()
         if channel is None:

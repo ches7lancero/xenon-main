@@ -1,15 +1,5 @@
 import discord_worker as wkr
-import random
-from datetime import datetime
-
-
-def make_id():
-    """
-    Generates a unique id consisting of the the unix timestamp in milliseconds and 16 random bits
-    """
-    unix_t = int(datetime.utcnow().timestamp() * 1000)
-    result = (unix_t << (64 - unix_t.bit_length())) | (random.getrandbits(16))
-    return hex(result)[2:]
+import utils
 
 
 class Backups(wkr.Module):
@@ -36,7 +26,7 @@ class Backups(wkr.Module):
 
         guild = await ctx.get_guild()
         data = guild.to_dict()
-        backup_id = data["_id"] = make_id()
+        backup_id = data["_id"] = utils.unique_id()
         await ctx.bot.db.backups.insert_one(data)
 
         embed = ctx.f.format(f"Successfully **created backup** with the id `{backup_id}`.", f=ctx.f.SUCCESS)["embed"]

@@ -1,4 +1,5 @@
-from .test import TestModule
+from .help import Help
+from .backups import Backups
 
 
-to_load = (TestModule,)
+to_load = (Help, Backups,)

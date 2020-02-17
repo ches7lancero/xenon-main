@@ -9,7 +9,7 @@ def make_id():
     """
     unix_t = int(datetime.utcnow().timestamp() * 1000)
     result = (unix_t << (64 - unix_t.bit_length())) | (random.getrandbits(16))
-    return str(result)
+    return hex(result)[2:]
 
 
 class Backups(wkr.Module):

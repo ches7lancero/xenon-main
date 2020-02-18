@@ -1,8 +1,8 @@
-from discord_worker import RabbitBot
+import discord_worker as wkr
 import modules
 
 
-class Xenon(RabbitBot):
+class Xenon(wkr.RabbitBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = self.mongo.xenon

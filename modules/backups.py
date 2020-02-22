@@ -4,6 +4,8 @@ import asyncio
 import pymongo
 from datetime import datetime
 
+from backups import BackupSaver, BackupLoader
+
 
 class BackupListMenu(wkr.ListMenu):
     embed_kwargs = {"title": "Your Backups"}
@@ -39,6 +41,8 @@ class Backups(wkr.Module):
         await ctx.invoke("help backup")
 
     @backup.command(aliases=("c",))
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
     async def create(self, ctx):
         """
         Create a backup
@@ -51,13 +55,15 @@ class Backups(wkr.Module):
         status_msg = await ctx.f_send("**Creating Backup** ...", f=ctx.f.WORKING)
 
         guild = await ctx.get_guild()
-        data = guild.to_dict()
+        backup = BackupSaver(ctx.client, guild)
+        await backup.save()
+
         backup_id = utils.unique_id()
         await ctx.bot.db.backups.insert_one({
             "_id": backup_id,
             "creator": ctx.author.id,
             "timestamp": datetime.utcnow(),
-            "data": data
+            "data": backup.data
         })
 
         embed = ctx.f.format(f"Successfully **created backup** with the id `{backup_id}`.", f=ctx.f.SUCCESS)["embed"]
@@ -69,7 +75,9 @@ class Backups(wkr.Module):
         await ctx.client.edit_message(status_msg, embed=embed)
 
     @backup.command(aliases=("l",))
-    async def load(self, ctx):
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
+    async def load(self, ctx, backup_id):
         """
         Load a backup
 
@@ -86,8 +94,40 @@ class Backups(wkr.Module):
         Only roles: ```{b.prefix}backup load oj1xky11871fzrbu !* roles```
         Everything but bans: ```{b.prefix}backup load oj1xky11871fzrbu !bans```
         """
+        backup_d = await ctx.client.db.backups.find_one({"_id": backup_id, "creator": ctx.author.id})
+        if backup_d is None:
+            raise ctx.f.ERROR(f"You have **no backup** with the id `{backup_id}`.")
+
+        warning_msg = await ctx.f_send("Are you sure that you want to load this backup?\n"
+                                       "__**All channels and roles will get replaced!**__", f=ctx.f.WARNING)
+        reactions = ("✅", "❌")
+        for reaction in reactions:
+            await ctx.client.add_reaction(warning_msg, reaction)
+
+        try:
+            data, = await ctx.client.wait_for(
+                "message_reaction_add",
+                ctx.shard_id,
+                check=lambda d: d["message_id"] == warning_msg.id and
+                                d["user_id"] == ctx.author.id and
+                                d["emoji"]["name"] in reactions,
+                timeout=60
+            )
+        except asyncio.TimeoutError:
+            await ctx.client.delete_message(warning_msg)
+            return
+
+        await ctx.client.delete_message(warning_msg)
+        if data["emoji"]["name"] != "✅":
+            return
+
+        guild = await ctx.get_guild()
+        backup = BackupLoader(ctx.client, guild, backup_d["data"])
+        await backup.load()
 
     @backup.command(aliases=("del", "remove", "rm"))
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
     async def delete(self, ctx, backup_id):
         result = await ctx.client.db.backups.delete_one({"_id": backup_id, "creator": ctx.author.id})
         if result.deleted_count > 0:
@@ -163,6 +203,8 @@ class Backups(wkr.Module):
         """
 
     @backup.command(aliases=("iv",))
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
     async def interval(self, ctx):
         """
         Setup automated backups

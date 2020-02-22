@@ -25,8 +25,9 @@ class Help(wkr.Module):
             embed["fields"].append({
                 "name": "Commands",
                 "value": "\n".join([
-                    "**{p}{c.usage:\u2002<15}** {c.brief}".format(p=prefix, c=sub_cmd)
+                    "**{p}{c.full_name:\u2002<15}** {c.brief}".format(p=prefix, c=sub_cmd)
                     for sub_cmd in cmd.commands
+                    if not sub_cmd.hidden
                 ])
             })
 

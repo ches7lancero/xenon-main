@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+import discord_worker as wkr
 
 
 base36 = '0123456789abcdefghijklmnopqrstuvwxyz'
@@ -50,3 +51,44 @@ class IterWaitFor:
 
     async def __anext__(self):
         return await self.client.wait_for(*self.args, **self.kwargs)
+
+
+def channel_tree(channels):
+    text = []
+    voice = []
+    ctg = []
+
+    for channel in sorted(channels, key=lambda c: c.position):
+        if channel.type == wkr.ChannelType.GUILD_VOICE:
+            voice.append(channel)
+
+        elif channel.type == wkr.ChannelType.GUILD_CATEGORY:
+            ctg.append(channel)
+
+        else:
+            text.append(channel)
+
+    result = "```"
+    text_no_ctg = filter(lambda t: t.parent_id is None, text)
+    for channel in text_no_ctg:
+        result += "\n#\u200a" + channel.name
+
+    voice_no_ctg = filter(lambda v: v.parent_id is None, voice)
+    for channel in voice_no_ctg:
+        result += "\n<\u200a" + channel.name
+
+    result += "\n"
+
+    for category in ctg:
+        result += "\n°\u200a" + category.name
+        t_children = filter(lambda c: c.parent_id == category.id, text)
+        for channel in t_children:
+            result += "\n  #\u200a" + channel.name
+
+        v_children = filter(lambda c: c.parent_id == category.id, voice)
+        for channel in v_children:
+            result += "\n  <\u200a" + channel.name
+
+        result += "\n"
+
+    return result + "```"

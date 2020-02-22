@@ -187,7 +187,7 @@ class Backups(wkr.Module):
         await menu.start()
 
     @backup.command(aliases=("i",))
-    async def info(self, ctx):
+    async def info(self, ctx, backup_id):
         """
         Get information about a backup
 
@@ -201,6 +201,42 @@ class Backups(wkr.Module):
 
         ```{c.prefix}backup info oj1xky11871fzrbu```
         """
+        backup = await ctx.client.db.backups.find_one({"_id": backup_id, "creator": ctx.author.id})
+        if backup is None:
+            raise ctx.f.ERROR(f"You have **no backup** with the id `{backup_id}`.")
+
+        guild = wkr.Guild(backup["data"])
+
+        channel_text = utils.channel_tree(guild.channels)
+        if len(channel_text) > 1024:
+            channel_text = channel_text[:1019] + "\n..."
+
+        voice_text = "```{}```".format("\n".join([
+            r.name for r in sorted(guild.roles, key=lambda r: r.position, reverse=True)
+        ]))
+        if len(voice_text) > 1024:
+            voice_text = voice_text[:1019] + "\n..."
+
+        raise ctx.f.DEFAULT(embed={
+            "title": guild.name,
+            "fields": [
+                {
+                    "name": "Created At",
+                    "value": utils.datetime_to_string(backup["timestamp"]),
+                    "inline": False
+                },
+                {
+                    "name": "Channels",
+                    "value": channel_text,
+                    "inline": True
+                },
+                {
+                    "name": "Roles",
+                    "value": voice_text,
+                    "inline": True
+                }
+            ]
+        })
 
     @backup.command(aliases=("iv",))
     @wkr.has_permissions(administrator=True)

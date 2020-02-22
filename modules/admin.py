@@ -28,7 +28,7 @@ class StaffListMenu(wkr.ListMenu):
 
 
 class Admin(wkr.Module):
-    @wkr.Module.command()
+    @wkr.Module.command(hidden=True)
     @wkr.is_bot_owner
     async def eval(self, ctx, *, expression):
         """
@@ -44,7 +44,14 @@ class Admin(wkr.Module):
 
         raise ctx.f.SUCCESS(f"```{res}```")
 
-    @wkr.Module.command()
+    @wkr.Module.command(hidden=True)
+    @checks.is_staff(level=checks.StaffLevel.ADMIN)
+    async def su(self, ctx, member: wkr.MemberConverter, *, command):
+        member = await member(ctx)
+        ctx.msg.author = member
+        await ctx.invoke(command)
+
+    @wkr.Module.command(hidden=True)
     @checks.is_staff()
     async def staff(self, ctx):
         """

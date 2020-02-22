@@ -1,4 +1,5 @@
 import traceback
+import discord_worker as wkr
 
 
 class Options:
@@ -111,11 +112,16 @@ class BackupLoader:
         def _tune_channel(channel):
             channel.pop("guild_id", None)
 
-            # Bitrates over 96000 require special features
-            if "bitrate" in channel.keys():
+            # Bitrates over 96000 require special features or boosts
+            # (boost advantages change a lot, so we just ignore them)
+            if "bitrate" in channel.keys() and "VIP_REGIONS" not in self.guild.features:
                 channel["bitrate"] = min(channel["bitrate"], 96000)
 
             # News and store channels require special features
+            if (channel["type"] == wkr.ChannelType.GUILD_NEWS and "NEWS" not in self.guild.features) or \
+                    (channel["type"] == wkr.ChannelType.GUILD_STORE and "COMMERCE" not in self.guild.features):
+                channel["type"] = 0
+
             channel["type"] = 0 if channel["type"] > 4 else channel["type"]
 
             if "parent_id" in channel.keys():

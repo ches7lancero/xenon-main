@@ -2,7 +2,7 @@ import discord_worker as wkr
 import utils
 import asyncio
 import pymongo
-from datetime import datetime
+from datetime import datetime, timedelta, time
 
 from backups import BackupSaver, BackupLoader
 
@@ -24,7 +24,7 @@ class BackupListMenu(wkr.ListMenu):
         async for backup in backups:
             items.append((
                 backup["_id"],
-                f"{backup['data']['name']} (`{utils.datetime_to_string(backup['timestamp'])}`)"
+                f"{backup['data']['name']} (`{utils.datetime_to_string(backup['timestamp'])} UTC`)"
             ))
 
         return items
@@ -222,7 +222,7 @@ class Backups(wkr.Module):
             "fields": [
                 {
                     "name": "Created At",
-                    "value": utils.datetime_to_string(backup["timestamp"]),
+                    "value": utils.datetime_to_string(backup["timestamp"]) + " UTC",
                     "inline": False
                 },
                 {
@@ -241,15 +241,15 @@ class Backups(wkr.Module):
     @backup.command(aliases=("iv",))
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
-    async def interval(self, ctx):
+    async def interval(self, ctx, *interval):
         """
-        Setup automated backups
+        Manage automated backups
 
 
         __Arguments__
 
-        **interval**: The time between every backup or "off".
-                    Supported units: minutes(m), hours(h), days(d), weeks(w), month(m)
+        **interval**: The time between every backup or "off". (min 24h)
+                    Supported units: hours(h), days(d), weeks(w)
                     Example: 1d 12h
 
 
@@ -257,3 +257,78 @@ class Backups(wkr.Module):
 
         ```{c.prefix}backup interval 24h```
         """
+        if len(interval) > 0:
+            await ctx.invoke("backup interval on " + " ".join(interval))
+            return
+
+        interval = await ctx.bot.db.intervals.find_one({"_id": ctx.guild_id})
+        if interval is None:
+            raise ctx.f.INFO("The **backup interval is** currently turned **off**.\n"
+                             f"Turn it on with `{ctx.bot.prefix}backup interval on 24h`.")
+
+    @interval.command(aliases=["enable"])
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
+    async def on(self, ctx, *interval):
+        """
+        Turn on automated backups
+
+
+        __Arguments__
+
+        **interval**: The time between every backup. (min 24h)
+                    Supported units: hours(h), days(d), weeks(w)
+                    Example: 1d 12h
+
+
+        __Examples__
+
+        ```{c.prefix}backup interval on 24h```
+        """
+        units = {
+            "h": 1,
+            "d": 24,
+            "w": 24 * 7
+        }
+
+        hours = 0
+        for arg in interval:
+            count, unit = int(arg[:-1]), arg[-1]
+            multiplier = units.get(unit.lower(), 1)
+            hours += count * multiplier
+
+        hours = min(hours, 24)
+
+        await ctx.bot.db.intervals.update_one({"_id": ctx.guild_id}, {"$set": {
+            "_id": ctx.guild_id,
+            "last": datetime.utcnow(),
+            "interval": hours
+        }}, upsert=True)
+
+        td = timedelta(hours=hours)
+        raise ctx.f.SUCCESS("Successful **enabled the backup interval**.\nThe first backup will be created in "
+                            f"`{utils.timedelta_to_string(td)}` "
+                            f"at `{utils.datetime_to_string(datetime.utcnow() + td)} UTC`.")
+
+    @interval.command(aliases=["disable"])
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
+    async def off(self, ctx):
+        """
+        Turn off automated backups
+
+
+        __Examples__
+
+        ```{c.prefix}backup interval off```
+        """
+        result = await ctx.bot.db.intervals.delete_one({"_id": ctx.guild_id})
+        if result.deleted_count > 0:
+            raise ctx.f.SUCCESS("Successfully **disabled the backup interval**.")
+
+        else:
+            raise ctx.f.ERROR(f"The backup interval is not enabled.")
+
+    @wkr.Module.task(minutes=10)
+    async def interval_task(self):
+        pass

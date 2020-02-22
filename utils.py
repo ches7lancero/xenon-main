@@ -1,5 +1,5 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 import discord_worker as wkr
 
 
@@ -36,8 +36,27 @@ def timestamp_from_id(uid):
     return datetime.utcfromtimestamp((base36_loads(uid) >> 8) / 1000)
 
 
-def datetime_to_string(datetime):
-    return datetime.strftime("%d. %b %Y - %H:%M")
+def datetime_to_string(dt: datetime):
+    return dt.strftime("%d. %b %Y - %H:%M")
+
+
+def timedelta_to_string(td: timedelta):
+    seconds = td.total_seconds()
+    units = (
+        ("w", 7 * 24 * 60 * 60),
+        ("d", 24 * 60 * 60),
+        ("h", 60 * 60),
+        ("m", 60),
+        ("s", 1)
+    )
+
+    result = ""
+    for unit, mp in units:
+        count, seconds = divmod(seconds, mp)
+        if count > 0:
+            result += f" {int(count)}{unit}"
+
+    return result.strip()
 
 
 class IterWaitFor:

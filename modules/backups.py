@@ -2,7 +2,7 @@ import discord_worker as wkr
 import utils
 import asyncio
 import pymongo
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 
 from backups import BackupSaver, BackupLoader
 
@@ -32,8 +32,6 @@ class BackupListMenu(wkr.ListMenu):
 
 class Backups(wkr.Module):
     @wkr.Module.command(aliases=("backups", "bu"))
-    @wkr.has_permissions(administrator=True)
-    @wkr.bot_has_permissions(administrator=True)
     async def backup(self, ctx):
         """
         Create & load private backups of your servers
@@ -41,6 +39,7 @@ class Backups(wkr.Module):
         await ctx.invoke("help backup")
 
     @backup.command(aliases=("c",))
+    @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
     async def create(self, ctx):
@@ -75,6 +74,7 @@ class Backups(wkr.Module):
         await ctx.client.edit_message(status_msg, embed=embed)
 
     @backup.command(aliases=("l",))
+    @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
     async def load(self, ctx, backup_id):
@@ -126,8 +126,6 @@ class Backups(wkr.Module):
         await backup.load()
 
     @backup.command(aliases=("del", "remove", "rm"))
-    @wkr.has_permissions(administrator=True)
-    @wkr.bot_has_permissions(administrator=True)
     async def delete(self, ctx, backup_id):
         result = await ctx.client.db.backups.delete_one({"_id": backup_id, "creator": ctx.author.id})
         if result.deleted_count > 0:
@@ -239,6 +237,7 @@ class Backups(wkr.Module):
         })
 
     @backup.command(aliases=("iv",))
+    @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
     async def interval(self, ctx, *interval):
@@ -267,6 +266,7 @@ class Backups(wkr.Module):
                              f"Turn it on with `{ctx.bot.prefix}backup interval on 24h`.")
 
     @interval.command(aliases=["enable"])
+    @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
     async def on(self, ctx, *interval):
@@ -311,6 +311,7 @@ class Backups(wkr.Module):
                             f"at `{utils.datetime_to_string(datetime.utcnow() + td)} UTC`.")
 
     @interval.command(aliases=["disable"])
+    @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
     async def off(self, ctx):

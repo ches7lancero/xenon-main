@@ -3,6 +3,7 @@ import utils
 import asyncio
 import pymongo
 from datetime import datetime, timedelta
+import random
 
 from backups import BackupSaver, BackupLoader
 
@@ -305,15 +306,17 @@ class Backups(wkr.Module):
             multiplier = units.get(unit.lower(), 1)
             hours += count * multiplier
 
-        hours = min(hours, 24)
+        # hours = min(hours, 24)
 
+        now = datetime.utcnow()
+        td = timedelta(hours=hours)
         await ctx.bot.db.intervals.update_one({"_id": ctx.guild_id}, {"$set": {
             "_id": ctx.guild_id,
-            "last": datetime.utcnow(),
+            "last": now,
+            "next": now + td,
             "interval": hours
         }}, upsert=True)
 
-        td = timedelta(hours=hours)
         raise ctx.f.SUCCESS("Successful **enabled the backup interval**.\nThe first backup will be created in "
                             f"`{utils.timedelta_to_string(td)}` "
                             f"at `{utils.datetime_to_string(datetime.utcnow() + td)} UTC`.")
@@ -339,6 +342,25 @@ class Backups(wkr.Module):
         else:
             raise ctx.f.ERROR(f"The backup interval is not enabled.")
 
-    @wkr.Module.task(minutes=10)
+    async def run_interval_backups(self, guild_id):
+        guild = await self.bot.get_guild(guild_id)
+        backup = BackupSaver(self.bot, guild)
+        await backup.save()
+
+        await self.bot.db.backups.replace_one({"_id": guild_id}, {
+            "_id": guild_id,
+            "creator": guild.owner_id,
+            "timestamp": datetime.utcnow(),
+            "interval": True,
+            "data": backup.data
+        }, upsert=True)
+
+    @wkr.Module.task(minutes=random.randint(5, 15))
     async def interval_task(self):
-        pass
+        to_backup = self.bot.db.intervals.find({"next": {"$lt": datetime.utcnow()}})
+        async for interval in to_backup:
+            guild_id = interval["_id"]
+            self.bot.schedule(self.run_interval_backups(guild_id))
+            await self.bot.db.intervals.update_one({"_id": guild_id}, {"$set": {
+                "next": interval["next"] + timedelta(hours=interval["interval"])
+            }})

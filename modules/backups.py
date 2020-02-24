@@ -42,6 +42,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def create(self, ctx):
         """
         Create a backup
@@ -77,6 +78,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
     async def load(self, ctx, backup_id, *options):
         """
         Load a backup
@@ -126,6 +128,7 @@ class Backups(wkr.Module):
         await backup.load(**utils.backup_options(options))
 
     @backup.command(aliases=("del", "remove", "rm"))
+    @wkr.cooldown(5, 30)
     async def delete(self, ctx, backup_id):
         result = await ctx.client.db.backups.delete_one({"_id": backup_id, "creator": ctx.author.id})
         if result.deleted_count > 0:
@@ -135,6 +138,7 @@ class Backups(wkr.Module):
             raise ctx.f.ERROR(f"You have **no backup** with the id `{backup_id}`.")
 
     @backup.command(aliases=("clear",))
+    @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
     async def purge(self, ctx):
         """
         Delete all your backups
@@ -172,6 +176,7 @@ class Backups(wkr.Module):
         raise ctx.f.SUCCESS("Deleted all your backups.")
 
     @backup.command(aliases=("ls",))
+    @wkr.cooldown(1, 10)
     async def list(self, ctx):
         """
         Get a list of your backups
@@ -185,6 +190,7 @@ class Backups(wkr.Module):
         await menu.start()
 
     @backup.command(aliases=("i",))
+    @wkr.cooldown(5, 30)
     async def info(self, ctx, backup_id):
         """
         Get information about a backup
@@ -240,6 +246,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def interval(self, ctx, *interval):
         """
         Manage automated backups
@@ -269,6 +276,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def on(self, ctx, *interval):
         """
         Turn on automated backups
@@ -314,6 +322,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def off(self, ctx):
         """
         Turn off automated backups

@@ -3,6 +3,7 @@ import discord_worker as wkr
 
 class Help(wkr.Module):
     @wkr.Module.command()
+    @wkr.cooldown(5, 10)
     async def help(self, ctx, *, command=None):
         if command is None:
             cmd = ctx.bot

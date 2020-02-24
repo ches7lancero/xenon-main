@@ -43,6 +43,7 @@ class Templates(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @wkr.cooldown(1, 30)
     async def create(self, ctx, name, *, description):
         """
         Create a **PUBLIC** template from this server
@@ -91,6 +92,7 @@ class Templates(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
     async def load(self, ctx, name, *options):
         """
         Load a template
@@ -140,6 +142,7 @@ class Templates(wkr.Module):
         await backup.load(**utils.backup_options(options))
 
     @template.command(aliases=("del", "remove", "rm"))
+    @wkr.cooldown(5, 30)
     async def delete(self, ctx, name):
         result = await ctx.client.db.templates.delete_one({"_id": name, "creator": ctx.author.id})
         if result.deleted_count > 0:
@@ -149,6 +152,7 @@ class Templates(wkr.Module):
             raise ctx.f.ERROR(f"There is **no template** with the name `{name}` **created by you**.")
 
     @template.command(aliases=("ls",))
+    @wkr.cooldown(1, 10)
     async def list(self, ctx):
         """
         Get a list of your backups
@@ -162,6 +166,7 @@ class Templates(wkr.Module):
         await menu.start()
 
     @template.command(aliases=("i",))
+    @wkr.cooldown(5, 30)
     async def info(self, ctx, name):
         """
         Get information about a template

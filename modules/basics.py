@@ -9,6 +9,7 @@ class Basics(wkr.Module):
         await ctx.bot.leave_guild(wkr.Snowflake(ctx.guild_id))
 
     @wkr.Module.command(aliases=["ping", "status"])
+    @wkr.cooldown(1, 10)
     async def shards(self, ctx):
         meta = await ctx.bot.cache.shards.find_one({"_id": "meta"})
         if meta is None:
@@ -41,11 +42,13 @@ class Basics(wkr.Module):
         })
 
     @wkr.Module.command(aliases=["iv"])
+    @wkr.cooldown(1, 5)
     async def invite(self, ctx):
         invite_url = wkr.invite_url(ctx.bot.user.id, wkr.Permissions(administrator=True))
         raise ctx.f.INFO(f"Click [here]({invite_url}) to **invite {ctx.bot.user.name}** to your server.")
 
     @wkr.Module.command(aliases=["i"])
+    @wkr.cooldown(1, 10)
     async def info(self, ctx):
         app = await ctx.bot.app_info()
         team_members = [app["owner"]["id"]]

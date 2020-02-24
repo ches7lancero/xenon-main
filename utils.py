@@ -111,3 +111,16 @@ def channel_tree(channels):
         result += "\n"
 
     return result + "```"
+
+
+def backup_options(options):
+    parsed_options = {}
+    for option in options:
+        option = option.replace("-", "_").lower()
+        if option.startswith("!"):
+            parsed_options[option[1:]] = False
+
+        else:
+            parsed_options[option] = True
+
+    return parsed_options

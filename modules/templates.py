@@ -53,6 +53,9 @@ class Templates(wkr.Module):
 
         ```{b.prefix}template create starter A basic template for new servers```
         """
+        if len(description) < 30:
+            raise ctx.f.ERROR("The template **description** must be at least **30 characters** long.")
+
         name = name.lower().replace(" ", "-").replace("_", "-")
         status_msg = await ctx.f_send("**Creating Template** ...", f=ctx.f.WORKING)
 
@@ -88,7 +91,7 @@ class Templates(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
-    async def load(self, ctx, name):
+    async def load(self, ctx, name, *options):
         """
         Load a template
 
@@ -134,7 +137,7 @@ class Templates(wkr.Module):
 
         guild = await ctx.get_guild()
         backup = BackupLoader(ctx.client, guild, template["data"])
-        await backup.load()
+        await backup.load(**utils.backup_options(options))
 
     @template.command(aliases=("del", "remove", "rm"))
     async def delete(self, ctx, name):

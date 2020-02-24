@@ -77,7 +77,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
-    async def load(self, ctx, backup_id):
+    async def load(self, ctx, backup_id, *options):
         """
         Load a backup
 
@@ -123,7 +123,7 @@ class Backups(wkr.Module):
 
         guild = await ctx.get_guild()
         backup = BackupLoader(ctx.client, guild, backup_d["data"])
-        await backup.load()
+        await backup.load(**utils.backup_options(options))
 
     @backup.command(aliases=("del", "remove", "rm"))
     async def delete(self, ctx, backup_id):

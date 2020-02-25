@@ -8,6 +8,9 @@ import random
 from backups import BackupSaver, BackupLoader
 
 
+MAX_BACKUPS = 15
+
+
 class BackupListMenu(wkr.ListMenu):
     embed_kwargs = {"title": "Your Backups"}
 
@@ -53,8 +56,11 @@ class Backups(wkr.Module):
 
         ```{b.prefix}backup create```
         """
-        status_msg = await ctx.f_send("**Creating Backup** ...", f=ctx.f.WORKING)
+        backup_count = await ctx.bot.db.backups.count_documents({"creator": ctx.author.id})
+        if backup_count >= MAX_BACKUPS:
+            raise ctx.f.ERROR(f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)")
 
+        status_msg = await ctx.f_send("**Creating Backup** ...", f=ctx.f.WORKING)
         guild = await ctx.get_guild()
         backup = BackupSaver(ctx.client, guild)
         await backup.save()

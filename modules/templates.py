@@ -11,15 +11,24 @@ from backups import BackupSaver, BackupLoader
 class TemplateListMenu(wkr.ListMenu):
     embed_kwargs = {"title": "Template List"}
 
+    def __init__(self, ctx, search):
+        super().__init__(ctx)
+        self.search = search.strip()
+
     async def get_items(self):
         args = {
             "limit": 10,
             "skip": self.page * 10,
             "sort": [("featured", pymongo.DESCENDING), ("uses", pymongo.DESCENDING)],
             "filter": {
-                "approved": True,
+                "approved": True
             }
         }
+        if self.search != "":
+            args["filter"]["$text"] = {
+                "$search": self.search
+            }
+
         templates = self.ctx.bot.db.templates.find(**args)
         items = []
         async for template in templates:
@@ -151,9 +160,9 @@ class Templates(wkr.Module):
         else:
             raise ctx.f.ERROR(f"There is **no template** with the name `{name}` **created by you**.")
 
-    @template.command(aliases=("ls",))
+    @template.command(aliases=("ls", "search", "s"))
     @wkr.cooldown(1, 10)
-    async def list(self, ctx):
+    async def list(self, ctx, *, search):
         """
         Get a list of your backups
 
@@ -162,7 +171,7 @@ class Templates(wkr.Module):
 
         ```{c.prefix}backup list```
         """
-        menu = TemplateListMenu(ctx)
+        menu = TemplateListMenu(ctx, search)
         await menu.start()
 
     @template.command(aliases=("i",))
@@ -222,3 +231,7 @@ class Templates(wkr.Module):
                 }
             ]
         })
+
+    @wkr.Module.listener()
+    async def on_load(self, *_, **__):
+        await self.bot.db.templates.create_index([("_id", pymongo.TEXT), ("description", pymongo.TEXT)])

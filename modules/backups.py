@@ -61,7 +61,7 @@ class Backups(wkr.Module):
             raise ctx.f.ERROR(f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)")
 
         status_msg = await ctx.f_send("**Creating Backup** ...", f=ctx.f.WORKING)
-        guild = await ctx.get_guild()
+        guild = await ctx.get_full_guild()
         backup = BackupSaver(ctx.client, guild)
         await backup.save()
 
@@ -130,7 +130,7 @@ class Backups(wkr.Module):
         if data["emoji"]["name"] != "✅":
             return
 
-        guild = await ctx.get_guild()
+        guild = await ctx.get_full_guild()
         backup = BackupLoader(ctx.client, guild, backup_d["data"])
         await backup.load(**utils.backup_options(options))
 
@@ -349,7 +349,7 @@ class Backups(wkr.Module):
             raise ctx.f.ERROR(f"The backup interval is not enabled.")
 
     async def run_interval_backups(self, guild_id):
-        guild = await self.bot.get_guild(guild_id)
+        guild = await self.bot.get_full_guild(guild_id)
         backup = BackupSaver(self.bot, guild)
         await backup.save()
 

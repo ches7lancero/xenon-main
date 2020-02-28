@@ -69,7 +69,7 @@ class Templates(wkr.Module):
         name = name.lower().replace(" ", "-").replace("_", "-")
         status_msg = await ctx.f_send("**Creating Template** ...", f=ctx.f.WORKING)
 
-        guild = await ctx.get_guild()
+        guild = await ctx.get_full_guild()
         backup = BackupSaver(ctx.client, guild)
         await backup.save()
 
@@ -146,7 +146,7 @@ class Templates(wkr.Module):
         if data["emoji"]["name"] != "✅":
             return
 
-        guild = await ctx.get_guild()
+        guild = await ctx.get_full_guild()
         backup = BackupLoader(ctx.client, guild, template["data"])
         await backup.load(**utils.backup_options(options))
 

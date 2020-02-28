@@ -1,7 +1,9 @@
 import discord_worker as wkr
 import inspect
 import pymongo
+from datetime import timedelta, datetime
 
+import utils
 import checks
 
 
@@ -50,6 +52,45 @@ class Admin(wkr.Module):
         member = await member(ctx)
         ctx.msg.author = member
         await ctx.invoke(command)
+
+    @wkr.Module.command(hidden=True)
+    @checks.is_staff(level=checks.StaffLevel.MOD)
+    async def gateway(self, ctx):
+        bot_gw = await ctx.bot.bot_gateway()
+        identifies = bot_gw["session_start_limit"]
+
+        reset_after = timedelta(milliseconds=identifies["reset_after"])
+        reset = datetime.utcnow() + reset_after
+
+        raise ctx.f.INFO(embed={
+            "fields": [
+                {
+                    "name": "Url",
+                    "value": bot_gw["url"],
+                    "inline": True
+                },
+                {
+                    "name": "Shards",
+                    "value": bot_gw["shards"],
+                    "inline": True
+                },
+                {
+                    "name": "Total Identifies",
+                    "value": identifies["total"],
+                    "inline": True
+                },
+                {
+                    "name": "Remaining Identifies",
+                    "value": identifies["remaining"],
+                    "inline": True
+                },
+                {
+                    "name": "Reset After",
+                    "value": f"{utils.timedelta_to_string(reset_after)} ({utils.datetime_to_string(reset)})",
+                    "inline": True
+                }
+            ]
+        })
 
     @wkr.Module.command(hidden=True)
     @checks.is_staff()

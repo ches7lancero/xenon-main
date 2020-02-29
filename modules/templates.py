@@ -34,13 +34,17 @@ class TemplateListMenu(wkr.ListMenu):
         async for template in templates:
             items.append((
                 template["_id"] + ("  🌟" if template["featured"] else ""),
-                f"{template['description']}"
+                template.get("description") or "No Description"
             ))
 
         return items
 
 
 class Templates(wkr.Module):
+    @wkr.Module.listener()
+    async def on_load(self, *_, **__):
+        await self.bot.db.templates.create_index([("_id", pymongo.TEXT), ("description", pymongo.TEXT)])
+
     @wkr.Module.command(aliases=("temp", "tpl"))
     async def template(self, ctx):
         """
@@ -63,6 +67,7 @@ class Templates(wkr.Module):
 
         ```{b.prefix}template create starter A basic template for new servers```
         """
+        raise ctx.f.ERROR("This command is not re-implemented yet. Please give us some time.")
         if len(description) < 30:
             raise ctx.f.ERROR("The template **description** must be at least **30 characters** long.")
 
@@ -196,15 +201,15 @@ class Templates(wkr.Module):
 
         guild = wkr.Guild(template["data"])
 
-        channel_text = utils.channel_tree(guild.channels)
-        if len(channel_text) > 1024:
-            channel_text = channel_text[:1019] + "\n..."
+        channels = utils.channel_tree(guild.channels)
+        if len(channels) > 1024:
+            channels = channels[:1000] + "\n...\n```"
 
-        voice_text = "```{}```".format("\n".join([
+        roles = "```{}```".format("\n".join([
             r.name for r in sorted(guild.roles, key=lambda r: r.position, reverse=True)
         ]))
-        if len(voice_text) > 1024:
-            voice_text = voice_text[:1019] + "\n..."
+        if len(roles) > 1024:
+            roles = roles[:1000] + "\n...\n```"
 
         raise ctx.f.DEFAULT(embed={
             "title": name + (" 🌟" if template["featured"] else "") + ("  ✅" if template["approved"] else " ❌"),
@@ -221,17 +226,13 @@ class Templates(wkr.Module):
                 },
                 {
                     "name": "Channels",
-                    "value": channel_text,
+                    "value": channels,
                     "inline": True
                 },
                 {
                     "name": "Roles",
-                    "value": voice_text,
+                    "value": roles,
                     "inline": True
                 }
             ]
         })
-
-    @wkr.Module.listener()
-    async def on_load(self, *_, **__):
-        await self.bot.db.templates.create_index([("_id", pymongo.TEXT), ("description", pymongo.TEXT)])

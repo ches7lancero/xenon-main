@@ -35,6 +35,12 @@ class BackupListMenu(wkr.ListMenu):
 
 
 class Backups(wkr.Module):
+    @wkr.Module.listener()
+    async def on_load(self, *_, **__):
+        await self.bot.db.backups.create_index([("creator", pymongo.ASCENDING)])
+        await self.bot.db.backups.create_index([("timestamp", pymongo.ASCENDING)])
+        await self.bot.db.backups.create_index([("data.id", pymongo.ASCENDING)])
+
     @wkr.Module.command(aliases=("backups", "bu"))
     async def backup(self, ctx):
         """
@@ -218,15 +224,15 @@ class Backups(wkr.Module):
 
         guild = wkr.Guild(backup["data"])
 
-        channel_text = utils.channel_tree(guild.channels)
-        if len(channel_text) > 1024:
-            channel_text = channel_text[:1019] + "\n..."
+        channels = utils.channel_tree(guild.channels)
+        if len(channels) > 1024:
+            channels = channels[:1000] + "\n...\n```"
 
-        voice_text = "```{}```".format("\n".join([
+        roles = "```{}```".format("\n".join([
             r.name for r in sorted(guild.roles, key=lambda r: r.position, reverse=True)
         ]))
-        if len(voice_text) > 1024:
-            voice_text = voice_text[:1019] + "\n..."
+        if len(roles) > 1024:
+            roles = roles[:1000] + "\n...\n```"
 
         raise ctx.f.DEFAULT(embed={
             "title": guild.name,
@@ -238,12 +244,12 @@ class Backups(wkr.Module):
                 },
                 {
                     "name": "Channels",
-                    "value": channel_text,
+                    "value": channels,
                     "inline": True
                 },
                 {
                     "name": "Roles",
-                    "value": voice_text,
+                    "value": roles,
                     "inline": True
                 }
             ]
@@ -312,7 +318,7 @@ class Backups(wkr.Module):
             multiplier = units.get(unit.lower(), 1)
             hours += count * multiplier
 
-        # hours = min(hours, 24)
+        hours = min(hours, 24)
 
         now = datetime.utcnow()
         td = timedelta(hours=hours)

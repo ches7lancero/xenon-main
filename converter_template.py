@@ -2,6 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import asyncio
 import discord_worker as wkr
 import traceback
+from datetime import datetime
 
 loop = asyncio.get_event_loop()
 old_db = AsyncIOMotorClient("mongodb://144.91.118.247:8899").xenon
@@ -9,7 +10,7 @@ new_db = AsyncIOMotorClient().xenon
 
 
 async def convert_and_insert(backup):
-    data = backup["backup"]
+    data = backup["template"]
     new_data = {
         "id": data["id"],
         "name": data["name"],
@@ -160,16 +161,20 @@ async def convert_and_insert(backup):
     result = {
         "_id": str(backup["_id"]),
         "creator": str(backup["creator"]),
-        "timestamp": backup["timestamp"],
-        "data": new_data
+        "timestamp": backup.get("timestamp", datetime.utcnow()),
+        "data": new_data,
+        "featured": backup["featured"],
+        "approved": backup["approved"],
+        "uses": backup.get("uses", 0),
+        "description": backup["description"]
     }
 
-    await new_db.backups.replace_one({"_id": result["_id"]}, result, upsert=True)
+    await new_db.templates.replace_one({"_id": result["_id"]}, result, upsert=True)
 
 
 async def run():
     i = 0
-    async for backup in old_db.backups.find():
+    async for backup in old_db.templates.find():
         i += 1
         if i % 1000 == 0:
             print(i)

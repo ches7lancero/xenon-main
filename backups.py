@@ -55,12 +55,16 @@ class BackupLoader:
         self.data = data
 
         self.options = Options(
+            settings=True,
             roles=True,
             delete_roles=True,
             channels=True,
             delete_channels=True,
         )
         self.id_translator = {}
+
+    async def _load_settings(self):
+        await self.client.edit_guild(self.guild, **self.data)
 
     async def _load_roles(self):
         existing = sorted(
@@ -152,6 +156,7 @@ class BackupLoader:
     async def load(self, **options):
         self.options.update(**options)
         loaders = {
+            "settings": self._load_settings,
             "roles": self._load_roles,
             "delete_channels": self._delete_channels,
             "channels": self._load_channels
@@ -159,4 +164,7 @@ class BackupLoader:
 
         for key, loader in loaders.items():
             if self.options.get(key):
-                await loader()
+                try:
+                    await loader()
+                except:
+                    traceback.print_exc()

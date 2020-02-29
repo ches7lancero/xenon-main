@@ -17,17 +17,12 @@ class Basics(wkr.Module):
         """
         Get an overview over the status of the shards
         """
-        meta = await ctx.bot.cache.shards.find_one({"_id": "meta"})
-        if meta is None:
-            raise ctx.f.ERROR("Can't fetch shard info.")
-
-        shard_count = meta.get("shard_count", 1)
+        state = await ctx.bot.get_state()
+        shard_count = state.get("shard_count", 1)
         latencies = []
-        async for shard in ctx.bot.cache.shards.find({
-            "_id": {"$ne": "meta", "$lt": shard_count}
-        }):
-            if shard["latency"] != -1:
-                latencies.append(shard["latency"])
+        shards = await ctx.bot.get_shards()
+        for id, shard in shards.items():
+            latencies.append(shard["latency"])
 
         raise ctx.f.INFO(embed={
             "author": {
@@ -41,7 +36,7 @@ class Basics(wkr.Module):
                 },
                 {
                     "name": "Average Latency",
-                    "value": str(sum(latencies) / len(latencies)),
+                    "value": str(round(sum(latencies) / len(latencies) * 1000, 1)) + " ms",
                     "inline": True
                 }
             ]
@@ -65,12 +60,9 @@ class Basics(wkr.Module):
         This guild: ```{b.prefix}shard```
         Another guild: ```{b.prefix}shard 410488579140354049```
         """
-        meta = await ctx.bot.cache.shards.find_one({"_id": "meta"})
-        if meta is None:
-            raise ctx.f.ERROR("Can't fetch shard info.")
-
+        state = await ctx.bot.get_state()
         guild_id = int(guild_id or ctx.guild_id)
-        shard_count = meta.get("shard_count", 1)
+        shard_count = state.get("shard_count", 1)
         shard_id = (guild_id >> 22) % shard_count
         raise ctx.f.INFO(f"**The guild** with the id {guild_id} belongs to the **shard {shard_id}**.\n"
                          f"This might change at any time.")

@@ -50,7 +50,7 @@ class Templates(wkr.Module):
         """
         Create & load **PUBLIC** templates
         """
-        await ctx.invoke("help backup")
+        await ctx.invoke("help template")
 
     @template.command(aliases=("c",))
     @wkr.guild_only

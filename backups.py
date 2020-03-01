@@ -69,7 +69,7 @@ class BackupLoader:
 
     async def _load_roles(self):
         bot_member = await self.client.get_bot_member(self.guild.id)
-        top_role = list(sorted(bot_member.roles_from_guild(self.guild), key=lambda r: r.position))[0]
+        top_role = list(sorted(bot_member.roles_from_guild(self.guild), key=lambda r: r.position))[-1]
 
         existing = sorted(
             [r for r in filter(
@@ -108,9 +108,8 @@ class BackupLoader:
             new = await self.client.create_role(self.guild, **role)
             self.id_translator[role["id"]] = new.id
 
-        if len(existing) > 0:
-            for role in existing:
-                await self.client.delete_role(role)
+        for role in existing:
+            await self.client.delete_role(role)
 
     async def _delete_channels(self):
         for channel in self.guild.channels:

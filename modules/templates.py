@@ -244,6 +244,7 @@ class Templates(wkr.Module):
             ) + (
                          "  ✅" if template["approved"] else " ❌"
                      ),
+            "description": template["description"],
             "fields": [
                 {
                     "name": "Creator",
@@ -286,7 +287,7 @@ class Templates(wkr.Module):
             return
 
         try:
-            msg = wkr.Message(await self.client.fetch_message(wkr.Snowflake(data["channel_id"]), data["message_id"]))
+            msg = await self.client.fetch_message(wkr.Snowflake(data["channel_id"]), data["message_id"])
         except wkr.NotFound:
             return
 

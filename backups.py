@@ -68,8 +68,14 @@ class BackupLoader:
         await self.client.edit_guild(self.guild, **self.data)
 
     async def _load_roles(self):
+        bot_member = await self.client.get_bot_member(self.guild.id)
+        top_role = list(sorted(bot_member.roles_from_guild(self.guild), key=lambda r: r.position))[0]
+
         existing = sorted(
-            [r for r in filter(lambda r: not r.managed and not r.is_default(), self.guild.roles)],
+            [r for r in filter(
+                lambda r: not r.managed and not r.is_default() and r.position < top_role.position,
+                self.guild.roles
+            )],
             key=lambda r: r.position,
             reverse=True
         )

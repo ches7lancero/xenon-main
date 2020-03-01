@@ -356,6 +356,9 @@ class Backups(wkr.Module):
 
     async def run_interval_backups(self, guild_id):
         guild = await self.bot.get_full_guild(guild_id)
+        if guild is None:
+            return
+
         backup = BackupSaver(self.bot, guild)
         await backup.save()
 

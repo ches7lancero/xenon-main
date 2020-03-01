@@ -64,6 +64,7 @@ class BackupLoader:
         self.id_translator = {}
 
     async def _load_settings(self):
+        self.data.pop("guild_id", None)
         await self.client.edit_guild(self.guild, **self.data)
 
     async def _load_roles(self):

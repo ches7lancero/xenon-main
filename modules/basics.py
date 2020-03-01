@@ -60,6 +60,7 @@ class Basics(wkr.Module):
         This guild: ```{b.prefix}shard```
         Another guild: ```{b.prefix}shard 410488579140354049```
         """
+        guild_id = guild_id or ctx.guild_id
         shard_id = await ctx.bot.guild_shard(guild_id)
         raise ctx.f.INFO(f"**The guild** with the id {guild_id} belongs to the **shard {shard_id}**.\n"
                          f"This might change at any time.")

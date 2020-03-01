@@ -60,10 +60,7 @@ class Basics(wkr.Module):
         This guild: ```{b.prefix}shard```
         Another guild: ```{b.prefix}shard 410488579140354049```
         """
-        state = await ctx.bot.get_state()
-        guild_id = int(guild_id or ctx.guild_id)
-        shard_count = state.get("shard_count", 1)
-        shard_id = (guild_id >> 22) % shard_count
+        shard_id = await ctx.bot.guild_shard(guild_id)
         raise ctx.f.INFO(f"**The guild** with the id {guild_id} belongs to the **shard {shard_id}**.\n"
                          f"This might change at any time.")
 
@@ -92,7 +89,7 @@ class Basics(wkr.Module):
             "author": {
                 "name": ctx.bot.user.name
             },
-            "description": "Server Backups, Temapltes and more",
+            "description": "Server Backups, Templates and more",
             "fields": [
                 {
                     "name": "Invite",

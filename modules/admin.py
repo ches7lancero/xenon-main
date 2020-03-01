@@ -70,7 +70,7 @@ class Admin(wkr.Module):
                     "inline": True
                 },
                 {
-                    "name": "Shards",
+                    "name": "Recommended Shards",
                     "value": bot_gw["shards"],
                     "inline": True
                 },

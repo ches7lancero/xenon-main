@@ -94,7 +94,7 @@ class Admin(wkr.Module):
                 ret = await func()
 
         except Exception as e:
-            raise ctx.f.INFO(f"```{stdout.getvalue()}```\n```py\n{e.__class__.__name__}:\n{e}\n```")
+            raise ctx.f.INFO(f"```\n{stdout.getvalue() or 'Not Stdout'}\n```\n```py\n{e.__class__.__name__}:\n{e}\n```")
 
         value = stdout.getvalue()
         if ret is None:
@@ -103,7 +103,7 @@ class Admin(wkr.Module):
 
         else:
             self._last_exec = ret
-            raise ctx.f.INFO(f"```{value}```\n```py\n{ret}\n```")
+            raise ctx.f.INFO(f"```\n{value or 'Not Stdout'}\n```\n```py\n{ret}\n```")
 
     @wkr.Module.command(hidden=True)
     @checks.is_staff(level=checks.StaffLevel.ADMIN)

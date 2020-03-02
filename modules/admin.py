@@ -2,6 +2,9 @@ import discord_worker as wkr
 import inspect
 import pymongo
 from datetime import timedelta, datetime
+from contextlib import redirect_stdout
+import textwrap
+import io
 
 import utils
 import checks
@@ -30,6 +33,10 @@ class StaffListMenu(wkr.ListMenu):
 
 
 class Admin(wkr.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_exec = None
+
     @wkr.Module.command(hidden=True)
     @wkr.is_bot_owner
     async def eval(self, ctx, *, expression):
@@ -45,6 +52,58 @@ class Admin(wkr.Module):
             res = f"{type(e).__name__}: {str(e)}"
 
         raise ctx.f.SUCCESS(f"```{res}```")
+
+    @wkr.Module.command(hidden=True)
+    @wkr.is_bot_owner
+    async def exec(self, ctx, *, code):
+        """
+        Executes a code snipped
+        It's internally wrapped in an async function to provide async functionalities
+        """
+        # Remove code blocks
+        if code.startswith('```') and code.endswith('```'):
+            code = '\n'.join(code.split('\n')[1:-1])
+
+        code = code.strip("` \n")
+
+        # Make some values available
+        env = {
+            'bot': self.bot,
+            'ctx': ctx,
+            'imp': __import__,  # Simple shortcut for importing modules
+            '_': self._last_exec  # Last exec result
+        }
+        env.update(globals())
+
+        # Wrap code in async function to provide async functionalities
+        to_compile = f'async def func():\n{textwrap.indent(code, "  ")}'
+
+        try:
+            exec(to_compile, env)
+
+        except Exception as e:
+            raise ctx.f.INFO(f"```py\n{e.__class__.__name__}:\n{e}\n```")
+
+        # The async function is now available in the environment
+        func = env["func"]
+
+        # Store stdout of the async def
+        stdout = io.StringIO()
+        try:
+            with redirect_stdout(stdout):
+                ret = await func()
+
+        except Exception as e:
+            raise ctx.f.INFO(f"```{stdout.getvalue()}```\n```py\n{e.__class__.__name__}:\n{e}\n```")
+
+        value = stdout.getvalue()
+        if ret is None:
+            if value:
+                raise ctx.f.INFO(f"```{value}```")
+
+        else:
+            self._last_exec = ret
+            raise ctx.f.INFO(f"```{value}```\n```py\n{ret}\n```")
 
     @wkr.Module.command(hidden=True)
     @checks.is_staff(level=checks.StaffLevel.ADMIN)

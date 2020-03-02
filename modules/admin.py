@@ -43,6 +43,9 @@ class Admin(wkr.Module):
         """
         Evaluate a singe expression and get the result
         """
+        if expression.startswith("await "):
+            expression = expression[6:]
+
         try:
             res = eval(expression)
             if inspect.isawaitable(res):
@@ -69,6 +72,7 @@ class Admin(wkr.Module):
         # Make some values available
         env = {
             'bot': self.bot,
+            'client': self.client,
             'ctx': ctx,
             'imp': __import__,  # Simple shortcut for importing modules
             '_': self._last_exec  # Last exec result
@@ -94,7 +98,7 @@ class Admin(wkr.Module):
                 ret = await func()
 
         except Exception as e:
-            raise ctx.f.INFO(f"```\n{stdout.getvalue() or 'Not Stdout'}\n```\n```py\n{e.__class__.__name__}:\n{e}\n```")
+            raise ctx.f.INFO(f"```\n{stdout.getvalue() or 'No Stdout'}\n```\n```py\n{e.__class__.__name__}:\n{e}\n```")
 
         value = stdout.getvalue()
         if ret is None:
@@ -103,7 +107,7 @@ class Admin(wkr.Module):
 
         else:
             self._last_exec = ret
-            raise ctx.f.INFO(f"```\n{value or 'Not Stdout'}\n```\n```py\n{ret}\n```")
+            raise ctx.f.INFO(f"```\n{value or 'No Stdout'}\n```\n```py\n{ret}\n```")
 
     @wkr.Module.command(hidden=True)
     @checks.is_staff(level=checks.StaffLevel.ADMIN)

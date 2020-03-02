@@ -9,7 +9,10 @@ class Help(wkr.Module):
             cmd = ctx.bot
 
         else:
-            _, cmd = ctx.bot.find_command(command.split(" "))
+            try:
+                _, cmd = ctx.bot.find_command(command.split(" "))
+            except wkr.CommandNotFound:
+                raise ctx.f.ERROR(f"There is **no command** called `{command}`.")
 
         prefix = ctx.bot.prefix
         embed = {

@@ -74,6 +74,7 @@ class Admin(wkr.Module):
             'bot': self.bot,
             'client': self.client,
             'ctx': ctx,
+            'wkr': wkr,
             'imp': __import__,  # Simple shortcut for importing modules
             '_': self._last_exec  # Last exec result
         }

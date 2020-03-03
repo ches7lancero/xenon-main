@@ -37,25 +37,25 @@ class Redis(wkr.Module):
             if isinstance(result, bytes):
                 result = msgpack.unpackb(result)
 
-            raise ctx.f.INFO(f"```py{result}```")
+            raise ctx.f.INFO(f"```py\n{result}\n```")
 
     @cache.command()
     @wkr.is_bot_owner
     async def guild(self, ctx, guild_id):
         result = await ctx.bot.redis.hget("guilds", guild_id)
         data = msgpack.unpackb(result)
-        raise ctx.f.INFO(f"```py{json.dumps(data, indent=1)}```")
+        raise ctx.f.INFO(f"```py\n{json.dumps(data, indent=1)}\n```")
 
     @cache.command()
     @wkr.is_bot_owner
     async def channel(self, ctx, channel_id):
         result = await ctx.bot.redis.hget("channels", channel_id)
         data = msgpack.unpackb(result)
-        raise ctx.f.INFO(f"```py{json.dumps(data, indent=1)}```")
+        raise ctx.f.INFO(f"```py\n{json.dumps(data, indent=1)}\n```")
 
     @cache.command()
     @wkr.is_bot_owner
     async def role(self, ctx, role_id):
         result = await ctx.bot.redis.hget("roles", role_id)
         data = msgpack.unpackb(result)
-        raise ctx.f.INFO(f"```py{json.dumps(data, indent=1)}```")
+        raise ctx.f.INFO(f"```py\n{json.dumps(data, indent=1)}\n```")

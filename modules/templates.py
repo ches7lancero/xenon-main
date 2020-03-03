@@ -198,7 +198,8 @@ class Templates(wkr.Module):
 
         __Examples__
 
-        ```{b.prefix}backup list```
+        All templates: ```{b.prefix}template list```
+        Search: ```{b.prefix}template search roleplay```
         """
         menu = TemplateListMenu(ctx, search)
         await menu.start()

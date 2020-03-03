@@ -42,7 +42,7 @@ class Redis(wkr.Module):
     @cache.command()
     @wkr.is_bot_owner
     async def guild(self, ctx, guild_id):
-        if not await ctx.ot.redis.hexists("guilds", guild_id):
+        if not await ctx.bot.redis.hexists("guilds", guild_id):
             await ctx.f_send("Guild is not in cache. Fetching and adding ...", f=ctx.f.WORKING)
             try:
                 guild = await ctx.bot.fetch_guild(guild_id)
@@ -63,7 +63,7 @@ class Redis(wkr.Module):
     @cache.command()
     @wkr.is_bot_owner
     async def channel(self, ctx, channel_id):
-        if not await ctx.ot.redis.hexists("channels", channel_id):
+        if not await ctx.bot.redis.hexists("channels", channel_id):
             await ctx.f_send("Channel is not in cache. Fetching and adding ...", f=ctx.f.WORKING)
             try:
                 channel = await ctx.bot.fetch_channel(channel_id)
@@ -79,7 +79,7 @@ class Redis(wkr.Module):
     @cache.command()
     @wkr.is_bot_owner
     async def role(self, ctx, role_id, guild_id=None):
-        if not await ctx.ot.redis.hexists("roles", role_id):
+        if not await ctx.bot.redis.hexists("roles", role_id):
             if guild_id is None:
                 raise ctx.f.ERROR("Role is not in cache. Provide a guild_id to fetch and add it.")
 

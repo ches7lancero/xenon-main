@@ -198,7 +198,7 @@ class Templates(wkr.Module):
 
         __Examples__
 
-        ```{c.prefix}backup list```
+        ```{b.prefix}backup list```
         """
         menu = TemplateListMenu(ctx, search)
         await menu.start()
@@ -217,7 +217,7 @@ class Templates(wkr.Module):
 
         __Examples__
 
-        ```{c.prefix}template info starter```
+        ```{b.prefix}template info starter```
         """
         template = await ctx.client.db.templates.find_one({"_id": name})
         if template is None:

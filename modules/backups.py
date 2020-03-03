@@ -197,7 +197,7 @@ class Backups(wkr.Module):
 
         __Examples__
 
-        ```{c.prefix}backup list```
+        ```{b.prefix}backup list```
         """
         menu = BackupListMenu(ctx)
         await menu.start()
@@ -216,7 +216,7 @@ class Backups(wkr.Module):
 
         __Examples__
 
-        ```{c.prefix}backup info oj1xky11871fzrbu```
+        ```{b.prefix}backup info oj1xky11871fzrbu```
         """
         backup = await ctx.client.db.backups.find_one({"_id": backup_id, "creator": ctx.author.id})
         if backup is None:
@@ -274,7 +274,7 @@ class Backups(wkr.Module):
 
         __Examples__
 
-        ```{c.prefix}backup interval 24h```
+        ```{b.prefix}backup interval 24h```
         """
         if len(interval) > 0:
             await ctx.invoke("backup interval on " + " ".join(interval))
@@ -304,7 +304,7 @@ class Backups(wkr.Module):
 
         __Examples__
 
-        ```{c.prefix}backup interval on 24h```
+        ```{b.prefix}backup interval on 24h```
         """
         units = {
             "h": 1,
@@ -345,7 +345,7 @@ class Backups(wkr.Module):
 
         __Examples__
 
-        ```{c.prefix}backup interval off```
+        ```{b.prefix}backup interval off```
         """
         result = await ctx.bot.db.intervals.delete_one({"_id": ctx.guild_id})
         if result.deleted_count > 0:

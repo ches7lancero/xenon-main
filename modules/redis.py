@@ -34,10 +34,7 @@ class Redis(wkr.Module):
 
         else:
             result = await ctx.bot.redis.execute(*cmd)
-            if isinstance(result, bytes):
-                result = msgpack.unpackb(result)
-
-            raise ctx.f.INFO(f"```js\n{result}\n```")
+            raise ctx.f.INFO(f"```py\n{result}\n```")
 
     @cache.command()
     @wkr.is_bot_owner

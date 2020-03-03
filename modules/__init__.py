@@ -4,6 +4,7 @@ from .backups import Backups
 from .templates import Templates
 from .basics import Basics
 from .build import Build
+from .redis import Redis
 
 
-to_load = (Help, Admin, Backups, Basics, Templates, Build)
+to_load = (Help, Admin, Backups, Basics, Templates, Build, Redis)

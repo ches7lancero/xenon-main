@@ -166,7 +166,7 @@ class Admin(wkr.Module):
         menu = StaffListMenu(ctx)
         await menu.start()
 
-    @staff.command()
+    @staff.command(keep_checks=False)
     @wkr.is_bot_owner
     async def add(self, ctx, user: wkr.UserConverter, level="mod"):
         """
@@ -194,7 +194,7 @@ class Admin(wkr.Module):
         await ctx.bot.db.staff.update_one({"_id": user.id}, {"$set": {"level": level.value}}, upsert=True)
         raise ctx.f.SUCCESS(f"Successfully **added `{user}` to the staff list**.")
 
-    @staff.command()
+    @staff.command(keep_checks=False, aliases=("rm",))
     @wkr.is_bot_owner
     async def remove(self, ctx, user: wkr.UserConverter):
         """

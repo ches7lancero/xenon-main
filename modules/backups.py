@@ -286,9 +286,6 @@ class Backups(wkr.Module):
                              f"Turn it on with `{ctx.bot.prefix}backup interval on 24h`.")
 
     @interval.command(aliases=["enable"])
-    @wkr.guild_only
-    @wkr.has_permissions(administrator=True)
-    @wkr.bot_has_permissions(administrator=True)
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def on(self, ctx, *interval):
         """
@@ -318,7 +315,7 @@ class Backups(wkr.Module):
             multiplier = units.get(unit.lower(), 1)
             hours += count * multiplier
 
-        hours = min(hours, 24)
+        hours = max(hours, 24)
 
         now = datetime.utcnow()
         td = timedelta(hours=hours)
@@ -334,9 +331,6 @@ class Backups(wkr.Module):
                             f"at `{utils.datetime_to_string(datetime.utcnow() + td)} UTC`.")
 
     @interval.command(aliases=["disable"])
-    @wkr.guild_only
-    @wkr.has_permissions(administrator=True)
-    @wkr.bot_has_permissions(administrator=True)
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def off(self, ctx):
         """

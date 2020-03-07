@@ -26,6 +26,6 @@ def is_staff(level=StaffLevel.MOD):
 
             return True
 
-        return wkr.Check(callback, check)
+        return wkr.Check(check, callback)
 
     return predicate

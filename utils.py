@@ -1,6 +1,6 @@
 import random
 from datetime import datetime, timedelta
-import discord_worker as wkr
+import xenon_worker as wkr
 
 
 base36 = '0123456789abcdefghijklmnopqrstuvwxyz'

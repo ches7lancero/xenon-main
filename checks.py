@@ -1,4 +1,4 @@
-import discord_worker as wkr
+import xenon_worker as wkr
 from enum import Enum
 
 

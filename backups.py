@@ -1,5 +1,5 @@
 import traceback
-import discord_worker as wkr
+import xenon_worker as wkr
 
 
 class Options:

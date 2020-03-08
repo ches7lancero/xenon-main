@@ -1,4 +1,4 @@
-import discord_worker as wkr
+import xenon_worker as wkr
 import inspect
 import pymongo
 from datetime import timedelta, datetime

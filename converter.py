@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 import asyncio
-import discord_worker as wkr
+import xenon_worker as wkr
 import traceback
 
 loop = asyncio.get_event_loop()

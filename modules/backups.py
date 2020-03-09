@@ -143,6 +143,15 @@ class Backups(wkr.Module):
     @backup.command(aliases=("del", "remove", "rm"))
     @wkr.cooldown(5, 30)
     async def delete(self, ctx, backup_id):
+        """
+        Delete one of your backups
+        __**This cannot be undone**__
+
+
+        __Examples__
+
+        ```{b.prefix}backup delete 3zpssue46g```
+        """
         result = await ctx.client.db.backups.delete_one({"_id": backup_id, "creator": ctx.author.id})
         if result.deleted_count > 0:
             raise ctx.f.SUCCESS("Successfully **deleted backup**.")

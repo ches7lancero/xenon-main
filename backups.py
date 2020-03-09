@@ -39,9 +39,19 @@ class BackupSaver:
             if not r.managed
         ]
 
+    async def _save_bans(self):
+        self.data["bans"] = [
+            {
+                "reason": ban["reason"],
+                "id": ban["user"]["id"]
+            }
+            for ban in await self.client.fetch_bans(self.guild)
+        ]
+
     async def save(self, **options):
         savers = {
-            "roles": self._save_roles
+            "roles": self._save_roles,
+            "bans": self._save_bans
         }
 
         for _, saver in savers.items():
@@ -60,6 +70,7 @@ class BackupLoader:
             delete_roles=True,
             channels=True,
             delete_channels=True,
+            bans=True
         )
         self.id_translator = {}
 
@@ -159,13 +170,21 @@ class BackupLoader:
             new = await self.client.create_channel(self.guild, **_tune_channel(channel))
             self.id_translator[channel["id"]] = new.id
 
+    async def _load_bans(self):
+        for ban in self.data.get("bans", []):
+            try:
+                await self.client.ban_user(self.guild, wkr.Snowflake(ban["id"]), reason=ban["reason"])
+            except Exception:
+                pass
+
     async def load(self, **options):
         self.options.update(**options)
         loaders = {
             "settings": self._load_settings,
             "roles": self._load_roles,
             "delete_channels": self._delete_channels,
-            "channels": self._load_channels
+            "channels": self._load_channels,
+            "bans": self._load_bans
         }
 
         for key, loader in loaders.items():

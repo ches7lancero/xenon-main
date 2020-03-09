@@ -30,29 +30,8 @@ async def convert_and_insert(backup):
         "owner_id": data["owner"],
         "afk_timeout": data.get("afk_timeout", 3600),
         "roles": [],
-        "members": [
-            {
-                "nick": member.get("nick"),
-                "roles": member["roles"],
-                "deaf": False,
-                "mute": False,
-                "user": {
-                    "id": member["id"],
-                    "username": member["name"],
-                    "discriminator": member["discriminator"]
-                }
-            }
-            for member in data["members"]
-        ],
-        "bans": [
-            {
-                "reason": ban.get("reason"),
-                "user": {
-                    "id": ban["user"]
-                }
-            }
-            for ban in data.get("bans", [])
-        ],
+        "members": [],
+        "bans": [],
         "channels": [],
     }
 
@@ -165,7 +144,7 @@ async def convert_and_insert(backup):
         "data": new_data,
         "featured": backup["featured"],
         "approved": backup["approved"],
-        "uses": backup.get("uses", 0),
+        "uses": backup.get("used", 0),
         "description": backup["description"]
     }
 

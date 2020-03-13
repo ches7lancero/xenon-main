@@ -231,6 +231,7 @@ class Backups(wkr.Module):
         if backup is None:
             raise ctx.f.ERROR(f"You have **no backup** with the id `{backup_id}`.")
 
+        backup["data"].pop("members", None)
         guild = wkr.Guild(backup["data"])
 
         channels = utils.channel_tree(guild.channels)

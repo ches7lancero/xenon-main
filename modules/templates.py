@@ -7,6 +7,7 @@ from datetime import datetime
 from os import environ as env
 
 from backups import BackupSaver, BackupLoader
+import checks
 
 
 class TemplateListMenu(wkr.ListMenu):
@@ -272,6 +273,36 @@ class Templates(wkr.Module):
                 }
             ]
         }
+
+    @template.command(hidden=True)
+    @checks.is_staff(level=checks.StaffLevel.MOD)
+    async def approve(self, ctx, tpl_name):
+        template = await self.client.db.templates.find_one({"_id": tpl_name})
+        if template is None:
+            raise ctx.f.ERROR(f"There is **no template** with the name `{tpl_name}`.")
+
+        await self.approve(template)
+        raise ctx.f.SUCCESS("Successfully **approved template**.")
+
+    @template.command(hidden=True)
+    @checks.is_staff(level=checks.StaffLevel.MOD)
+    async def feature(self, ctx, tpl_name):
+        template = await self.client.db.templates.find_one({"_id": tpl_name})
+        if template is None:
+            raise ctx.f.ERROR(f"There is **no template** with the name `{tpl_name}`.")
+
+        await self._feature(template)
+        raise ctx.f.SUCCESS("Successfully **featured template**.")
+
+    @template.command(hidden=True)
+    @checks.is_staff(level=checks.StaffLevel.MOD)
+    async def deny(self, ctx, tpl_name, *, reason):
+        template = await self.client.db.templates.find_one({"_id": tpl_name})
+        if template is None:
+            raise ctx.f.ERROR(f"There is **no template** with the name `{tpl_name}`.")
+
+        await self._delete_because(reason)(template)
+        raise ctx.f.SUCCESS("Successfully **denied / deleted template**.")
 
     async def _send_to_approval(self, template):
         msg = await self.client.f_send(

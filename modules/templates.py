@@ -376,7 +376,7 @@ class Templates(wkr.Module):
             f"Your **template `{template['_id']}` got featured**.",
             f=self.client.f.INFO
         )
-        await self.client.f_send(wkr.Snowflake(self.LIST_CHANNEL), embed=self._template_info(template))
+        await self.client.f_send(wkr.Snowflake(self.FEATURED_CHANNEL), embed=self._template_info(template))
 
     async def _approve(self, template, *args):
         await self.client.db.templates.update_one({"_id": template["_id"]}, {"$set": {

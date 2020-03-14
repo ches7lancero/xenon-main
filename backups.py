@@ -59,7 +59,7 @@ class BackupSaver:
 
 
 class BackupLoader:
-    def __init__(self, client, guild, data):
+    def __init__(self, client, guild, data, reason="Backup loaded"):
         self.client = client
         self.guild = guild
         self.data = data
@@ -73,10 +73,11 @@ class BackupLoader:
             bans=True
         )
         self.id_translator = {}
+        self.reason = reason
 
     async def _load_settings(self):
         self.data.pop("guild_id", None)
-        await self.client.edit_guild(self.guild, **self.data)
+        await self.client.edit_guild(self.guild, **self.data, reason=self.reason)
 
     async def _load_roles(self):
         bot_member = await self.client.get_bot_member(self.guild.id)
@@ -99,7 +100,7 @@ class BackupLoader:
                 to_edit = self.guild.default_role
                 if to_edit is not None:
                     try:
-                        await self.client.edit_role(to_edit, **role)
+                        await self.client.edit_role(to_edit, **role, reason=self.reason)
                         self.id_translator[role["id"]] = to_edit.id
 
                     except Exception:
@@ -110,22 +111,22 @@ class BackupLoader:
             if len(existing) > 0:
                 try:
                     to_edit = existing.pop(0)
-                    await self.client.edit_role(to_edit, **role)
+                    await self.client.edit_role(to_edit, **role, reason=self.reason)
                     self.id_translator[role["id"]] = to_edit.id
                     continue
                 except Exception:
                     traceback.print_exc()
 
-            new = await self.client.create_role(self.guild, **role)
+            new = await self.client.create_role(self.guild, **role, reason=self.reason)
             self.id_translator[role["id"]] = new.id
 
         for role in existing:
-            await self.client.delete_role(role)
+            await self.client.delete_role(role, reason=self.reason)
 
     async def _delete_channels(self):
         for channel in self.guild.channels:
             try:
-                await self.client.delete_channel(channel)
+                await self.client.delete_channel(channel, reason=self.reason)
             except:
                 traceback.print_exc()
 
@@ -159,7 +160,7 @@ class BackupLoader:
             key=lambda c: c.get("position")
         )
         for channel in no_parent:
-            new = await self.client.create_channel(self.guild, **_tune_channel(channel))
+            new = await self.client.create_channel(self.guild, **_tune_channel(channel), reason=self.reason)
             self.id_translator[channel["id"]] = new.id
 
         has_parent = sorted(
@@ -167,7 +168,7 @@ class BackupLoader:
             key=lambda c: c["position"]
         )
         for channel in has_parent:
-            new = await self.client.create_channel(self.guild, **_tune_channel(channel))
+            new = await self.client.create_channel(self.guild, **_tune_channel(channel), reason=self.reason)
             self.id_translator[channel["id"]] = new.id
 
     async def _load_bans(self):

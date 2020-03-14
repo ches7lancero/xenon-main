@@ -137,7 +137,7 @@ class Backups(wkr.Module):
             return
 
         guild = await ctx.get_full_guild()
-        backup = BackupLoader(ctx.client, guild, backup_d["data"])
+        backup = BackupLoader(ctx.client, guild, backup_d["data"], reason="Backup loaded by " + str(ctx.author))
         await backup.load(**utils.backup_options(options))
 
     @backup.command(aliases=("del", "remove", "rm"))

@@ -177,7 +177,7 @@ class Templates(wkr.Module):
             return
 
         guild = await ctx.get_full_guild()
-        backup = BackupLoader(ctx.client, guild, template["data"])
+        backup = BackupLoader(ctx.client, guild, template["data"], reason="Template loaded by " + str(ctx.author))
 
         options = list(options)
         options.append("!settings")

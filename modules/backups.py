@@ -64,7 +64,11 @@ class Backups(wkr.Module):
         """
         backup_count = await ctx.bot.db.backups.count_documents({"creator": ctx.author.id})
         if backup_count >= MAX_BACKUPS:
-            raise ctx.f.ERROR(f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)")
+            raise ctx.f.ERROR(
+                f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)\n"
+                f"You to **delete old backups** with `{ctx.bot.prefix}backup delete <id>` or **buy "
+                f"[Xenon Premium](https://www.patreon.com/merlinfuchs)** to create new backups.."
+            )
 
         status_msg = await ctx.f_send("**Creating Backup** ...", f=ctx.f.WORKING)
         guild = await ctx.get_full_guild()

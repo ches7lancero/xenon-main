@@ -53,7 +53,7 @@ class Backups(wkr.Module):
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
-    async def create(self, ctx):
+    async def create(self, ctx, chatlog=0):
         """
         Create a backup
 
@@ -73,7 +73,7 @@ class Backups(wkr.Module):
         status_msg = await ctx.f_send("**Creating Backup** ...", f=ctx.f.WORKING)
         guild = await ctx.get_full_guild()
         backup = BackupSaver(ctx.client, guild)
-        await backup.save()
+        await backup.save(chatlog)
 
         backup_id = utils.unique_id()
         await ctx.bot.db.backups.insert_one({
@@ -96,7 +96,7 @@ class Backups(wkr.Module):
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
     @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
-    async def load(self, ctx, backup_id, *options):
+    async def load(self, ctx, backup_id, chatlog=0, *options):
         """
         Load a backup
 
@@ -142,7 +142,7 @@ class Backups(wkr.Module):
 
         guild = await ctx.get_full_guild()
         backup = BackupLoader(ctx.client, guild, backup_d["data"], reason="Backup loaded by " + str(ctx.author))
-        await backup.load(**utils.backup_options(options))
+        await backup.load(chatlog, **utils.backup_options(options))
 
     @backup.command(aliases=("del", "remove", "rm"))
     @wkr.cooldown(5, 30)

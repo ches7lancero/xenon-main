@@ -1,5 +1,6 @@
 import traceback
 import xenon_worker as wkr
+import math
 
 
 class Options:
@@ -31,6 +32,7 @@ class BackupSaver:
         self.client = client
         self.guild = guild
         self.data = guild.to_dict()
+        self.chatlog = None
 
     async def _save_roles(self):
         self.data["roles"] = [
@@ -48,10 +50,50 @@ class BackupSaver:
             for ban in await self.client.fetch_bans(self.guild)
         ]
 
-    async def save(self, **options):
+    async def _save_members(self):
+        self.data["members"] = [
+            {
+                "id": member.id,
+                "nick": member.nick,
+                "deaf": member.deaf,
+                "mute": member.mute,
+                "roles": member.roles
+            }
+            async for member in self.client.iter_members(self.guild, math.inf)
+        ]
+
+    async def _save_messages(self):
+        if self.chatlog <= 0:
+            return
+
+        messages = self.data["messages"] = {}
+
+        for channel in self.guild.channels:
+            messages[channel.id] = [
+                {
+                    "id": message.id,
+                    "content": message.content,
+                    "author": message.author.user.to_dict(),
+                    "attachments": [
+                        {
+                            "filename": attachment["filename"],
+                            "url": attachment["url"]
+                        }
+                        for attachment in message.attachments
+                    ],
+                    "pinned": message.pinned,
+                    "embeds": message.embeds
+                }
+                async for message in self.client.iter_messages()
+            ]
+
+    async def save(self, chatlog=0, **options):
+        self.chatlog = chatlog
         savers = {
             "roles": self._save_roles,
-            "bans": self._save_bans
+            "bans": self._save_bans,
+            "members": self._save_members,
+            "messages": self._save_messages
         }
 
         for _, saver in savers.items():
@@ -64,6 +106,7 @@ class BackupLoader:
         self.guild = guild
         self.data = data
 
+        self.chatlog = None
         self.options = Options(
             settings=True,
             roles=True,
@@ -178,7 +221,8 @@ class BackupLoader:
             except Exception:
                 pass
 
-    async def load(self, **options):
+    async def load(self, chatlog, **options):
+        self.chatlog = chatlog
         self.options.update(**options)
         loaders = (
             ("settings", self._load_settings),

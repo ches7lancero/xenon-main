@@ -335,12 +335,12 @@ class Templates(wkr.Module):
 
         template = await self.client.db.templates.find_one({"_id": tpl_name})
         if template is not None:
-            await action(template, data["channel_id"])
+            await action(template)
 
         await self.client.delete_message(msg)
 
     def _delete_because(self, reason):
-        async def predicate(template, *args):
+        async def predicate(template):
             await self.client.db.templates.delete_one({"_id": template["_id"]})
             dm_channel = await self.client.start_dm(wkr.Snowflake(template["creator"]))
             await self.client.f_send(
@@ -351,19 +351,23 @@ class Templates(wkr.Module):
 
         return predicate
 
-    async def _delete(self, template, channel_id):
+    async def _delete(self, template):
         shard_id = await self.client.guild_shard(self.APPROVAL_GUILD)
-        data, = await self.client.wait_for(
-            event="message_create",
-            shard_id=shard_id,
-            check=lambda d: d["channel_id"] == channel_id,
-            timeout=60
-        )
-        msg = wkr.Message(data)
-        await self.client.delete_message(msg)
-        await self._delete_because(msg.content)(template)
+        try:
+            data, = await self.client.wait_for(
+                event="message_create",
+                shard_id=shard_id,
+                check=lambda d: d["channel_id"] == self.APPROVAL_CHANNEL,
+                timeout=60
+            )
+        except asyncio.TimeoutError:
+            pass
+        else:
+            msg = wkr.Message(data)
+            await self.client.delete_message(msg)
+            await self._delete_because(msg.content)(template)
 
-    async def _feature(self, template, *args):
+    async def _feature(self, template):
         await self.client.db.templates.update_one({"_id": template["_id"]}, {"$set": {
             "approved": True,
             "featured": True
@@ -378,7 +382,7 @@ class Templates(wkr.Module):
         )
         await self.client.f_send(wkr.Snowflake(self.FEATURED_CHANNEL), embed=self._template_info(template))
 
-    async def _approve(self, template, *args):
+    async def _approve(self, template):
         await self.client.db.templates.update_one({"_id": template["_id"]}, {"$set": {
             "approved": True
         }})

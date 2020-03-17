@@ -312,33 +312,6 @@ class Templates(wkr.Module):
         for option in self.APPROVAL_OPTIONS.keys():
             await self.client.add_reaction(msg, option)
 
-    @wkr.Module.listener()
-    async def on_message_reaction_add(self, shard_id, data):
-        if data["channel_id"] != self.APPROVAL_CHANNEL or data["user_id"] == self.bot.user.id:
-            return
-
-        action = self.APPROVAL_OPTIONS.get(data["emoji"]["name"])
-        if action is None:
-            return
-
-        try:
-            msg = await self.client.fetch_message(wkr.Snowflake(data["channel_id"]), data["message_id"])
-        except wkr.NotFound:
-            return
-
-        if len(msg.embeds) == 0:
-            return
-
-        tpl_name = msg.embeds[0].get("title", "").strip(" ✅❌")
-        if tpl_name == "":
-            return
-
-        template = await self.client.db.templates.find_one({"_id": tpl_name})
-        if template is not None:
-            await action(template)
-
-        await self.client.delete_message(msg)
-
     def _delete_because(self, reason):
         async def predicate(template):
             await self.client.db.templates.delete_one({"_id": template["_id"]})

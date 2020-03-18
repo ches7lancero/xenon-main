@@ -64,10 +64,20 @@ class Backups(wkr.Module):
 
         ```{b.prefix}backup create```
         """
+        max_backups = MAX_BACKUPS
+        if ctx.premium == checks.PremiumLevel.ONE:
+            max_backups = 50
+
+        elif ctx.premium == checks.PremiumLevel.TWO:
+            max_backups = 150
+
+        elif ctx.premium == checks.PremiumLevel.THREE:
+            max_backups = 500
+
         backup_count = await ctx.bot.db.backups.count_documents({"creator": ctx.author.id})
-        if backup_count >= MAX_BACKUPS:
+        if backup_count >= max_backups:
             raise ctx.f.ERROR(
-                f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)\n"
+                f"You have **exceeded the maximum count** of backups. (`{backup_count}/{max_backups}`)\n"
                 f"You to **delete old backups** with `{ctx.bot.prefix}backup delete <id>` or **buy "
                 f"[Xenon Premium](https://www.patreon.com/merlinfuchs)** to create new backups.."
             )
@@ -334,6 +344,18 @@ class Backups(wkr.Module):
             hours += count * multiplier
 
         hours = max(hours, 24)
+        keep = 1
+        if ctx.premium == checks.PremiumLevel.ONE:
+            hours = max(hours, 12)
+            keep = 2
+
+        elif ctx.premium == checks.PremiumLevel.TWO:
+            hours = max(hours, 8)
+            keep = 4
+
+        elif ctx.premium == checks.PremiumLevel.THREE:
+            hours = max(hours, 2)
+            keep = 8
 
         now = datetime.utcnow()
         td = timedelta(hours=hours)
@@ -341,6 +363,7 @@ class Backups(wkr.Module):
             "_id": ctx.guild_id,
             "last": now,
             "next": now + td,
+            "keep": keep,
             "interval": hours
         }}, upsert=True)
 
@@ -367,16 +390,23 @@ class Backups(wkr.Module):
         else:
             raise ctx.f.ERROR(f"The backup interval is not enabled.")
 
-    async def run_interval_backups(self, guild_id):
+    async def run_interval_backup(self, guild_id, keep=1):
         guild = await self.bot.get_full_guild(guild_id)
         if guild is None:
             return
+
+        existing = self.bot.db.backups.find({"guild.id": guild_id, "interval": True}, sort=[("timestamp", pymongo.DESCENDING)])
+        counter = 0
+        async for backup in existing:
+            counter += 1
+            if counter >= keep:
+                await self.bot.db.backups.delete_one({"_id": backup["_id"]})
 
         backup = BackupSaver(self.bot, guild)
         await backup.save()
 
         await self.bot.db.backups.replace_one({"_id": guild_id}, {
-            "_id": guild_id,
+            "_id": utils.unique_id(),
             "creator": guild.owner_id,
             "timestamp": datetime.utcnow(),
             "interval": True,
@@ -388,7 +418,7 @@ class Backups(wkr.Module):
         to_backup = self.bot.db.intervals.find({"next": {"$lt": datetime.utcnow()}})
         async for interval in to_backup:
             guild_id = interval["_id"]
-            self.bot.schedule(self.run_interval_backups(guild_id))
+            self.bot.schedule(self.run_interval_backup(guild_id), keep=interval.get("keep", 1))
             await self.bot.db.intervals.update_one({"_id": guild_id}, {"$set": {
                 "next": interval["next"] + timedelta(hours=interval["interval"])
             }})

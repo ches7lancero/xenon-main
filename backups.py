@@ -113,7 +113,8 @@ class BackupLoader:
             delete_roles=True,
             channels=True,
             delete_channels=True,
-            bans=True
+            bans=True,
+            members=True
         )
         self.id_translator = {}
         self.reason = reason
@@ -221,6 +222,12 @@ class BackupLoader:
             except Exception:
                 pass
 
+    async def _load_members(self):
+        pass
+
+    async def _load_messages(self):
+        pass
+
     async def load(self, chatlog, **options):
         self.chatlog = chatlog
         self.options.update(**options)
@@ -229,7 +236,9 @@ class BackupLoader:
             ("roles", self._load_roles),
             ("delete_channels", self._delete_channels),
             ("channels", self._load_channels),
-            ("bans", self._load_bans)
+            ("bans", self._load_bans),
+            ("members", self._load_members),
+            ("channels", self._load_members)
         )
 
         for key, loader in loaders:

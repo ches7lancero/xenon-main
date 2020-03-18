@@ -4,6 +4,7 @@ import asyncio
 import pymongo
 from datetime import datetime, timedelta
 import random
+import checks
 
 from backups import BackupSaver, BackupLoader
 
@@ -52,6 +53,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @checks.is_premium()
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def create(self, ctx, chatlog=0):
         """
@@ -95,6 +97,7 @@ class Backups(wkr.Module):
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)
+    @checks.is_premium()
     @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
     async def load(self, ctx, backup_id, chatlog=0, *options):
         """
@@ -300,6 +303,7 @@ class Backups(wkr.Module):
                              f"Turn it on with `{ctx.bot.prefix}backup interval on 24h`.")
 
     @interval.command(aliases=["enable"])
+    @checks.is_premium()
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def on(self, ctx, *interval):
         """
@@ -345,6 +349,7 @@ class Backups(wkr.Module):
                             f"at `{utils.datetime_to_string(datetime.utcnow() + td)} UTC`.")
 
     @interval.command(aliases=["disable"])
+    @checks.is_premium()
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def off(self, ctx):
         """

@@ -48,7 +48,7 @@ class NotPremium(wkr.CheckFailed):
         self.required = required
 
 
-def is_pro(level=PremiumLevel.ONE):
+def is_premium(level=PremiumLevel.ONE):
     def predicate(callback):
         async def check(ctx, *args, **kwargs):
             try:

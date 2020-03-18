@@ -180,15 +180,15 @@ class BackupLoader:
 
     async def load(self, **options):
         self.options.update(**options)
-        loaders = {
-            "settings": self._load_settings,
-            "roles": self._load_roles,
-            "delete_channels": self._delete_channels,
-            "channels": self._load_channels,
-            "bans": self._load_bans
-        }
+        loaders = (
+            ("settings", self._load_settings),
+            ("roles", self._load_roles),
+            ("delete_channels", self._delete_channels),
+            ("channels", self._load_channels),
+            ("bans", self._load_bans)
+        )
 
-        for key, loader in loaders.items():
+        for key, loader in loaders:
             if self.options.get(key):
                 try:
                     await loader()

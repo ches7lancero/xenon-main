@@ -2,7 +2,7 @@ import xenon_worker as wkr
 
 
 class Build(wkr.Module):
-    @wkr.Module.command()
+    @wkr.Module.command(hidden=True)
     @wkr.guild_only
     @wkr.has_permissions(administrator=True)
     @wkr.bot_has_permissions(administrator=True)

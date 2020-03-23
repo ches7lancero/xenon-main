@@ -1,6 +1,5 @@
 import traceback
 import xenon_worker as wkr
-import math
 
 
 class Options:
@@ -59,7 +58,7 @@ class BackupSaver:
                 "mute": member.mute,
                 "roles": member.roles
             }
-            async for member in self.client.iter_members(self.guild, math.inf)
+            async for member in self.client.iter_members(self.guild, 10**6)
         ]
 
     async def _save_messages(self):
@@ -84,7 +83,7 @@ class BackupSaver:
                     "pinned": message.pinned,
                     "embeds": message.embeds
                 }
-                async for message in self.client.iter_messages()
+                async for message in self.client.iter_messages(channel, self.chatlog)
             ]
 
     async def save(self, chatlog=0, **options):

@@ -55,7 +55,7 @@ class Backups(wkr.Module):
     @wkr.bot_has_permissions(administrator=True)
     @checks.is_premium()
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
-    async def create(self, ctx, chatlog=0):
+    async def create(self, ctx, chatlog: int =0):
         """
         Create a backup
 

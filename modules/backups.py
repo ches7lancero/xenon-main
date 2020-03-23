@@ -299,6 +299,25 @@ class Backups(wkr.Module):
             raise ctx.f.INFO("The **backup interval is** currently turned **off**.\n"
                              f"Turn it on with `{ctx.bot.prefix}backup interval on 24h`.")
 
+        else:
+            raise ctx.f.INFO(embed={
+                "author": {
+                    "name": "Backup Interval"
+                },
+                "fields": [
+                    {
+                        "name": "Interval",
+                        "value": utils.timedelta_to_string(timedelta(hours=interval["interval"])),
+                        "inline": True
+                    },
+                    {
+                        "name": "Next Backup",
+                        "value": utils.datetime_to_string(interval["next"]),
+                        "inline": True
+                    }
+                ]
+            })
+
     @interval.command(aliases=["enable"])
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def on(self, ctx, *interval):

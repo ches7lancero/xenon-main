@@ -327,6 +327,11 @@ class Backups(wkr.Module):
                         "name": "Next Backup",
                         "value": utils.datetime_to_string(interval["next"]),
                         "inline": True
+                    },
+                    {
+                        "name": "Keep",
+                        "value": interval.get("keep", 1),
+                        "inline": "False"
                     }
                 ]
             })

@@ -66,7 +66,7 @@ class Backups(wkr.Module):
         if backup_count >= MAX_BACKUPS:
             raise ctx.f.ERROR(
                 f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)\n"
-                f"You to **delete old backups** with `{ctx.bot.prefix}backup delete <id>` or **buy "
+                f"You need to **delete old backups** with `{ctx.bot.prefix}backup delete <id>` or **buy "
                 f"[Xenon Premium](https://www.patreon.com/merlinfuchs)** to create new backups.."
             )
 

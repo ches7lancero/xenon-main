@@ -77,8 +77,8 @@ class Backups(wkr.Module):
         backup_count = await ctx.bot.db.backups.count_documents({"creator": ctx.author.id})
         if backup_count >= max_backups:
             raise ctx.f.ERROR(
-                f"You have **exceeded the maximum count** of backups. (`{backup_count}/{max_backups}`)\n"
-                f"You to **delete old backups** with `{ctx.bot.prefix}backup delete <id>` or **buy "
+                f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)\n"
+                f"You need to **delete old backups** with `{ctx.bot.prefix}backup delete <id>` or **buy "
                 f"[Xenon Premium](https://www.patreon.com/merlinfuchs)** to create new backups.."
             )
 

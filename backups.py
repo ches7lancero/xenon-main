@@ -1,5 +1,6 @@
 import traceback
 import xenon_worker as wkr
+import asyncio
 
 
 class Options:
@@ -160,7 +161,17 @@ class BackupLoader:
                 except Exception:
                     traceback.print_exc()
 
-            new = await self.client.create_role(self.guild, **role, reason=self.reason)
+            try:
+                new = await asyncio.wait_for(
+                    self.client.create_role(self.guild, **role, reason=self.reason),
+                    timeout=15
+                )
+            except asyncio.TimeoutError:
+                raise self.client.f.ERROR("Seems like you **hit** the `250 per 24h` **role creation limit** of "
+                                          "discord.\nYou can either **wait 24 hours** until the limit was reset or "
+                                          "create enough roles manually for Xenon to use. This way, Xenon does not "
+                                          "need to create new roles, but can edit the existing ones.")
+
             self.id_translator[role["id"]] = new.id
 
         for role in existing:
@@ -244,5 +255,7 @@ class BackupLoader:
             if self.options.get(key):
                 try:
                     await loader()
-                except:
+                except wkr.CommandError:
+                    raise
+                except Exception:
                     traceback.print_exc()

@@ -192,5 +192,7 @@ class BackupLoader:
             if self.options.get(key):
                 try:
                     await loader()
-                except:
+                except wkr.CommandError:
+                    raise
+                except Exception:
                     traceback.print_exc()

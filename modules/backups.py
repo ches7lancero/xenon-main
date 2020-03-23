@@ -343,8 +343,6 @@ class Backups(wkr.Module):
             multiplier = units.get(unit.lower(), 1)
             hours += count * multiplier
 
-        hours = max(hours, 24)
-        keep = 1
         if ctx.premium == checks.PremiumLevel.ONE:
             hours = max(hours, 12)
             keep = 2
@@ -356,6 +354,10 @@ class Backups(wkr.Module):
         elif ctx.premium == checks.PremiumLevel.THREE:
             hours = max(hours, 2)
             keep = 8
+
+        else:
+            hours = max(hours, 24)
+            keep = 1
 
         now = datetime.utcnow()
         td = timedelta(hours=hours)
@@ -395,7 +397,7 @@ class Backups(wkr.Module):
         if guild is None:
             return
 
-        existing = self.bot.db.backups.find({"guild.id": guild_id, "interval": True}, sort=[("timestamp", pymongo.DESCENDING)])
+        existing = self.bot.db.backups.find({"data.id": guild_id, "interval": True}, sort=[("timestamp", pymongo.DESCENDING)])
         counter = 0
         async for backup in existing:
             counter += 1
@@ -405,20 +407,20 @@ class Backups(wkr.Module):
         backup = BackupSaver(self.bot, guild)
         await backup.save()
 
-        await self.bot.db.backups.replace_one({"_id": guild_id}, {
+        await self.bot.db.backups.insert_one({
             "_id": utils.unique_id(),
             "creator": guild.owner_id,
             "timestamp": datetime.utcnow(),
             "interval": True,
             "data": backup.data
-        }, upsert=True)
+        })
 
     @wkr.Module.task(minutes=random.randint(5, 15))
     async def interval_task(self):
         to_backup = self.bot.db.intervals.find({"next": {"$lt": datetime.utcnow()}})
         async for interval in to_backup:
             guild_id = interval["_id"]
-            self.bot.schedule(self.run_interval_backup(guild_id), keep=interval.get("keep", 1))
+            self.bot.schedule(self.run_interval_backup(guild_id, keep=interval.get("keep", 1)))
             await self.bot.db.intervals.update_one({"_id": guild_id}, {"$set": {
                 "next": interval["next"] + timedelta(hours=interval["interval"])
             }})

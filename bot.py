@@ -19,5 +19,13 @@ class Xenon(wkr.RabbitBot):
                 f=ctx.f.ERROR
             )
 
+        elif isinstance(e, checks.NotPremium):
+            await ctx.f_send(
+                f"This command **can only be used by users with the premium level `{e.required.name}` or higher**.\n"
+                f"Your current premium level is `{e.current.name}`. "
+                f"[Upgrade Here](https://www.patreon.com/merlinfuchs)",
+                f=ctx.f.ERROR
+            )
+
         else:
             await super().on_command_error(shard_id, cmd, ctx, e)

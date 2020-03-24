@@ -59,7 +59,7 @@ class BackupSaver:
                 "mute": member.mute,
                 "roles": member.roles
             }
-            async for member in self.client.iter_members(self.guild, 10**6)
+            async for member in self.client.iter_members(self.guild, 10 ** 6)
         ]
 
     async def _save_messages(self):
@@ -126,7 +126,7 @@ class BackupLoader:
         await self.client.edit_guild(self.guild, **self.data, reason=self.reason)
 
     async def _clean_members(self):
-        async for member in self.client.iter_members(self.guild, 10**6):
+        async for member in self.client.iter_members(self.guild, 10 ** 6):
             roles = [r.id for r in member.roles_from_guild(self.guild) if r.managed]
             self._member_cache[member.id] = roles
             try:
@@ -244,7 +244,25 @@ class BackupLoader:
                 pass
 
     async def _load_members(self):
-        pass
+        for member in self.data.get("members", []):
+            roles = self._member_cache.get(member["id"])
+            if roles is None:
+                continue
+
+            for role in member["roles"]:
+                new_id = self.id_translator.get(role)
+                if new_id is not None:
+                    roles.append(new_id)
+
+            try:
+                await self.client.edit_member(
+                    self.guild,
+                    wkr.Snowflake(member["id"]),
+                    nick=member.get("nick"),
+                    roles=roles
+                )
+            except Exception:
+                pass
 
     async def _load_messages(self):
         async def _load_in_channel(channel):

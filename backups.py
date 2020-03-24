@@ -76,9 +76,20 @@ class BackupLoader:
         self.id_translator = {}
         self.reason = reason
 
+        self._member_cache = {}
+
     async def _load_settings(self):
         self.data.pop("guild_id", None)
         await self.client.edit_guild(self.guild, **self.data, reason=self.reason)
+
+    async def _clean_members(self):
+        async for member in self.client.iter_members(self.guild, 10**6):
+            roles = [r.id for r in member.roles_from_guild(self.guild) if r.managed]
+            self._member_cache[member.id] = roles
+            try:
+                await self.client.edit_member(self.guild, member, roles=roles)
+            except Exception:
+                pass
 
     async def _load_roles(self):
         bot_member = await self.client.get_bot_member(self.guild.id)
@@ -193,6 +204,7 @@ class BackupLoader:
         self.options.update(**options)
         loaders = (
             ("settings", self._load_settings),
+            ("delete_roles", self._clean_members),
             ("roles", self._load_roles),
             ("delete_channels", self._delete_channels),
             ("channels", self._load_channels),

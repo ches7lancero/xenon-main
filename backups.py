@@ -299,8 +299,8 @@ class BackupLoader:
     async def load(self, chatlog, **options):
         self.chatlog = chatlog
         self.options.update(**options)
+        await self.client.edit_guild(self.guild, name="Loading ...")
         loaders = (
-            ("settings", self._load_settings),
             ("delete_roles", self._clean_members),
             ("roles", self._load_roles),
             ("delete_channels", self._delete_channels),

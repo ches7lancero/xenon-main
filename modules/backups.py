@@ -8,7 +8,6 @@ import checks
 
 from backups import BackupSaver, BackupLoader
 
-
 MAX_BACKUPS = 15
 
 
@@ -55,7 +54,7 @@ class Backups(wkr.Module):
     @wkr.bot_has_permissions(administrator=True)
     @checks.is_premium()
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
-    async def create(self, ctx, chatlog: int =0):
+    async def create(self, ctx, chatlog: int = 0):
         """
         Create a backup
 
@@ -72,7 +71,7 @@ class Backups(wkr.Module):
             max_backups = 150
 
         elif ctx.premium == checks.PremiumLevel.THREE:
-            max_backups = 500
+            max_backups = 300
 
         backup_count = await ctx.bot.db.backups.count_documents({"creator": ctx.author.id})
         if backup_count >= max_backups:
@@ -109,7 +108,7 @@ class Backups(wkr.Module):
     @wkr.bot_has_permissions(administrator=True)
     @checks.is_premium()
     @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
-    async def load(self, ctx, backup_id, chatlog=0, *options):
+    async def load(self, ctx, backup_id, chatlog: int = 0, *options):
         """
         Load a backup
 
@@ -421,7 +420,8 @@ class Backups(wkr.Module):
         if guild is None:
             return
 
-        existing = self.bot.db.backups.find({"data.id": guild_id, "interval": True}, sort=[("timestamp", pymongo.DESCENDING)])
+        existing = self.bot.db.backups.find({"data.id": guild_id, "interval": True},
+                                            sort=[("timestamp", pymongo.DESCENDING)])
         counter = 0
         async for backup in existing:
             counter += 1

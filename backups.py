@@ -236,7 +236,36 @@ class BackupLoader:
         pass
 
     async def _load_messages(self):
-        pass
+        async def _load_in_channel(channel):
+            messages = self.data.get("messages", {}).get(channel["id"], [])
+            if len(messages) <= 0:
+                return
+
+            new_id = self.id_translator.get(channel["id"])
+            if new_id is None:
+                return
+
+            webhook = await self.client.create_webhook(wkr.Snowflake(new_id), name="backup")
+            for msg in reversed(messages[:self.chatlog]):
+                author = wkr.User(msg["author"])
+                try:
+                    await self.client.execute_webhook(
+                        webhook,
+                        wait=True,
+                        username=author.name,
+                        avatar_url=author.avatar_url,
+                        **msg
+                    )
+                except wkr.NotFound:
+                    break
+
+                except Exception:
+                    pass
+
+            await self.client.delete_webhook(webhook)
+
+        for _channel in self.data["channels"]:
+            self.client.schedule(_load_in_channel(_channel))
 
     async def load(self, chatlog, **options):
         self.chatlog = chatlog
@@ -248,7 +277,7 @@ class BackupLoader:
             ("channels", self._load_channels),
             ("bans", self._load_bans),
             ("members", self._load_members),
-            ("channels", self._load_members)
+            ("channels", self._load_messages)
         )
 
         for key, loader in loaders:

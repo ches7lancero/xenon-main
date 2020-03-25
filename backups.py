@@ -71,7 +71,7 @@ class BackupLoader:
             delete_roles=True,
             channels=True,
             delete_channels=True,
-            bans=True
+            bans=False
         )
         self.id_translator = {data["id"]: guild.id}
         self.reason = reason

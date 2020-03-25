@@ -108,7 +108,7 @@ class BackupLoader:
             role.pop("guild_id", None)
 
             # Default role (@everyone)
-            if role["position"] == 0:
+            if role["id"] == self.data["id"]:
                 to_edit = self.guild.default_role
                 if to_edit is not None:
                     try:

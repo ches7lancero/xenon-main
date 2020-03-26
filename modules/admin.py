@@ -189,7 +189,7 @@ class Admin(wkr.Module):
             level = getattr(checks.StaffLevel, level.upper())
         except AttributeError:
             raise ctx.f.ERROR(f"`{level}` is **not a valid staff level**.\n"
-                              f"Choose from {', '.join([l.name.lower() for l in checks.StaffLevel])}.")
+                              f"Choose from `{', '.join([l.name.lower() for l in checks.StaffLevel])}`.")
 
         await ctx.bot.db.staff.update_one({"_id": user.id}, {"$set": {"level": level.value}}, upsert=True)
         raise ctx.f.SUCCESS(f"Successfully **added `{user}` to the staff list**.")

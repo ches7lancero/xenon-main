@@ -18,12 +18,38 @@ class SyncType(IntEnum):
     BANS = 1
 
 
+class SyncListMenu(wkr.ListMenu):
+    embed_kwargs = {"title": "Sync List"}
+
+    async def get_items(self):
+        args = {
+            "limit": 10,
+            "skip": self.page * 10,
+            "filter": {
+                "guilds": self.ctx.guild_id,
+            }
+        }
+        syncs = self.ctx.bot.db.syncs.find(**args)
+        items = []
+        async for sync in syncs:
+            if sync["type"] == SyncType.MESSAGES:
+                items.append((
+                    sync["_id"],
+                    f"Messages from <#{sync['source']}> to <#{sync['target']}>"
+                ))
+
+        return items
+
+
 class Sync(wkr.Module):
     @wkr.Module.listener()
     async def on_load(self, *_, **__):
         await self.bot.db.syncs.create_index(
             [("type", pymongo.ASCENDING), ("target", pymongo.ASCENDING), ("source", pymongo.ASCENDING)],
             unique=True
+        )
+        await self.bot.db.syncs.create_index(
+            [("guilds", pymongo.ASCENDING)]
         )
 
         await self.bot.subscribe("*.message_create", shared=True)
@@ -43,7 +69,33 @@ class Sync(wkr.Module):
 
     @sync.command(aliases=("ls",))
     async def list(self, ctx):
-        pass
+        """
+        Get a list of syncs associated with this guild
+
+
+        __Examples__
+
+        ```{b.prefix}backup list```
+        """
+        menu = SyncListMenu(ctx)
+        return await menu.start()
+
+    @sync.command(aliases=("del", "remove", "rm"))
+    async def delete(self, ctx, sync_id):
+        """
+        Delete a sync associated with this guild
+
+
+        __Examples__
+
+        ```{b.prefix}sync delete 3zpssue46g```
+        """
+        result = await ctx.bot.db.syncs.delete_one({"_id": sync_id, "guilds": ctx.guild_id})
+        if result.deleted_count > 0:
+            raise ctx.f.SUCCESS("Successfully **deleted sync**.")
+
+        else:
+            raise ctx.f.ERROR(f"There is **no sync** with the id `{sync_id}`.")
 
     async def _check_admin_on(self, guild, ctx):
         try:
@@ -65,6 +117,22 @@ class Sync(wkr.Module):
 
     @sync.command(aliases=("channels", "msg"))
     async def messages(self, ctx, direction, target: wkr.ChannelConverter):
+        """
+        Sync messages from one channel to another
+
+
+        __Arguments__
+
+        **direction**: `from`, `to` or `both`
+        **target**: The target channel (mention or id)
+
+
+        __Examples__
+
+        From the target to this channel: ```{b.prefix}sync messages from #general```
+        From this channel to the target: ```{b.prefix}sync messages to #general```
+        Both directions: ```{b.prefix}sync messages both #general```
+        """
         try:
             direction = getattr(SyncDirection, direction.upper())
         except AttributeError:
@@ -81,6 +149,7 @@ class Sync(wkr.Module):
             try:
                 await ctx.bot.db.syncs.insert_one({
                     "_id": sync_id,
+                    "guilds": [guild.id, ctx.guild_id],
                     "type": SyncType.MESSAGES,
                     "target": target_id,
                     "source": source_id,
@@ -113,15 +182,34 @@ class Sync(wkr.Module):
         syncs = self.bot.db.syncs.find({"source": msg.channel_id, "type": SyncType.MESSAGES})
         async for sync in syncs:
             webh = wkr.Webhook(sync["webhook"])
-            await self.client.execute_webhook(
-                webh,
-                username=msg.author.name,
-                avatar_url=msg.author.avatar_url,
-                **msg.to_dict()
-            )
+            try:
+                await self.client.execute_webhook(
+                    webh,
+                    username=msg.author.name,
+                    avatar_url=msg.author.avatar_url,
+                    **msg.to_dict()
+                )
+            except wkr.NotFound:
+                await self.bot.db.syncs.delete_one({"_id": sync["_id"]})
 
     @sync.command()
     async def bans(self, ctx, direction, target: wkr.GuildConverter):
+        """
+        Sync bans from one guild to another
+
+
+        __Arguments__
+
+        **direction**: `from`, `to` or `both`
+        **target**: The target guild
+
+
+        __Examples__
+
+        From the target to this guild: ```{b.prefix}sync bans from 410488579140354049```
+        From this guild to the target: ```{b.prefix}sync bans to 410488579140354049```
+        Both directions: ```{b.prefix}sync bans both 410488579140354049```
+        """
         try:
             direction = getattr(SyncDirection, direction.upper())
         except AttributeError:

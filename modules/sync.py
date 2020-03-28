@@ -170,7 +170,7 @@ class Sync(wkr.Module):
 
             else:
                 await ctx.f_send(
-                    f"Successfully **created sync** from <#{source_id}> to <#{target_id}>",
+                    f"Successfully **created sync** from <#{source_id}> to <#{target_id}> with the id `{sync_id}`",
                     f=ctx.f.SUCCESS
                 )
 
@@ -248,7 +248,7 @@ class Sync(wkr.Module):
 
             else:
                 await ctx.f_send(
-                    f"Successfully **created sync** from {source.name} to {target.name}.\n"
+                    f"Successfully **created sync** from {source.name} to {target.name} with the id `{sync_id}`.\n"
                     f"The bot will now copy all existing bans.",
                     f=ctx.f.SUCCESS
                 )

@@ -2,6 +2,7 @@ import xenon_worker as wkr
 import pymongo
 import pymongo.errors
 from enum import Enum, IntEnum
+import traceback
 
 import checks
 import utils
@@ -36,6 +37,12 @@ class SyncListMenu(wkr.ListMenu):
                 items.append((
                     sync["_id"],
                     f"Messages from <#{sync['source']}> to <#{sync['target']}>"
+                ))
+
+            elif sync["type"] == SyncType.BANS:
+                items.append((
+                    sync["_id"],
+                    f"Bans from {sync['source']} to {sync['target']}"
                 ))
 
         return items
@@ -192,8 +199,11 @@ class Sync(wkr.Module):
             except wkr.NotFound:
                 await self.bot.db.syncs.delete_one({"_id": sync["_id"]})
 
+            except Exception:
+                traceback.print_exc()
+
     @sync.command()
-    async def bans(self, ctx, direction, target: wkr.GuildConverter):
+    async def bans(self, ctx, direction, target):
         """
         Sync bans from one guild to another
 
@@ -216,5 +226,68 @@ class Sync(wkr.Module):
             raise ctx.f.ERROR(f"`{direction}` is **not a valid sync direction**.\n"
                               f"Choose from `{', '.join([l.name.lower() for l in SyncDirection])}`.")
 
-        guild = await target(ctx)
+        guild = await self.client.get_full_guild(target)
         await self._check_admin_on(guild, ctx)
+
+        async def _create_ban_sync(target, source):
+            sync_id = utils.unique_id()
+            try:
+                await ctx.bot.db.syncs.insert_one({
+                    "_id": sync_id,
+                    "guilds": [guild.id, ctx.guild_id],
+                    "type": SyncType.BANS,
+                    "target": target.id,
+                    "source": source.id,
+                })
+            except pymongo.errors.DuplicateKeyError:
+                await ctx.f_send(
+                    f"Sync from {source.name} to {target.name} **already exists**.",
+                    f=ctx.f.INFO
+                )
+                return
+
+            else:
+                await ctx.f_send(
+                    f"Successfully **created sync** from {source.name} to {target.name}.\n"
+                    f"The bot will now copy all existing bans.",
+                    f=ctx.f.SUCCESS
+                )
+
+            async def _copy_bans():
+                existing_bans = await ctx.bot.fetch_bans(source)
+                for ban in existing_bans:
+                    await self.bot.ban_user(target, wkr.Snowflake(ban["user"]["id"]), reason=ban["reason"])
+
+            self.bot.schedule(_copy_bans())
+
+        ctx_guild = await ctx.get_guild()
+        if direction == SyncDirection.FROM or direction == SyncDirection.BOTH:
+            await _create_ban_sync(ctx_guild, guild)
+
+        if direction == SyncDirection.TO or direction == SyncDirection.BOTH:
+            await _create_ban_sync(guild, ctx_guild)
+
+    @wkr.Module.listener()
+    async def on_guild_ban_add(self, _, data):
+        user = wkr.User(data["user"])
+        syncs = self.bot.db.syncs.find({"source": data["guild_id"], "type": SyncType.BANS})
+        # guild_ban_add doesn't receive the ban reason
+        ban = None
+        async for sync in syncs:
+            if ban is None:
+                ban = await self.bot.fetch_ban(wkr.Snowflake(data["guild_id"]), user)
+
+            try:
+                await self.bot.ban_user(wkr.Snowflake(sync["target"]), user, reason=ban["reason"])
+            except Exception:
+                traceback.print_exc()
+
+    @wkr.Module.listener()
+    async def on_guild_ban_remove(self, _, data):
+        user = wkr.User(data["user"])
+        syncs = self.bot.db.syncs.find({"source": data["guild_id"], "type": SyncType.BANS})
+        async for sync in syncs:
+            try:
+                await self.bot.unban_user(wkr.Snowflake(sync["target"]), user)
+            except Exception:
+                traceback.print_exc()

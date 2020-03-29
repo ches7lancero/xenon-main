@@ -194,7 +194,8 @@ class Sync(wkr.Module):
                     webh,
                     username=msg.author.name,
                     avatar_url=msg.author.avatar_url,
-                    **msg.to_dict()
+                    **msg.to_dict(),
+                    allowed_mentions={"parse": []}
                 )
             except wkr.NotFound:
                 await self.bot.db.syncs.delete_one({"_id": sync["_id"]})

@@ -283,6 +283,7 @@ class BackupLoader:
                         wait=True,
                         username=author.name,
                         avatar_url=author.avatar_url,
+                        allowed_mentions={"parse": []},
                         **msg
                     )
                 except wkr.NotFound:

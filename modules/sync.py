@@ -30,7 +30,7 @@ class SyncListMenu(wkr.ListMenu):
                 "guilds": self.ctx.guild_id,
             }
         }
-        syncs = self.ctx.bot.db.syncs.find(**args)
+        syncs = self.ctx.bot.db.premium.syncs.find(**args)
         items = []
         async for sync in syncs:
             if sync["type"] == SyncType.MESSAGES:
@@ -51,11 +51,11 @@ class SyncListMenu(wkr.ListMenu):
 class Sync(wkr.Module):
     @wkr.Module.listener()
     async def on_load(self, *_, **__):
-        await self.bot.db.syncs.create_index(
+        await self.bot.db.premium.syncs.create_index(
             [("type", pymongo.ASCENDING), ("target", pymongo.ASCENDING), ("source", pymongo.ASCENDING)],
             unique=True
         )
-        await self.bot.db.syncs.create_index(
+        await self.bot.db.premium.syncs.create_index(
             [("guilds", pymongo.ASCENDING)]
         )
 
@@ -64,10 +64,6 @@ class Sync(wkr.Module):
         await self.bot.subscribe("*.guild_ban_remove", shared=True)
 
     @wkr.Module.command()
-    @wkr.guild_only
-    @wkr.has_permissions(administrator=True)
-    @wkr.bot_has_permissions(administrator=True)
-    @checks.is_premium()
     async def sync(self, ctx):
         """
         Sync messages and bans between different servers and channels
@@ -75,6 +71,10 @@ class Sync(wkr.Module):
         await ctx.invoke("help sync")
 
     @sync.command(aliases=("ls",))
+    @wkr.guild_only
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
+    @checks.is_premium()
     async def list(self, ctx):
         """
         Get a list of syncs associated with this guild
@@ -88,6 +88,10 @@ class Sync(wkr.Module):
         return await menu.start()
 
     @sync.command(aliases=("del", "remove", "rm"))
+    @wkr.guild_only
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
+    @checks.is_premium()
     async def delete(self, ctx, sync_id):
         """
         Delete a sync associated with this guild
@@ -97,7 +101,7 @@ class Sync(wkr.Module):
 
         ```{b.prefix}sync delete 3zpssue46g```
         """
-        result = await ctx.bot.db.syncs.delete_one({"_id": sync_id, "guilds": ctx.guild_id})
+        result = await ctx.bot.db.premium.syncs.delete_one({"_id": sync_id, "guilds": ctx.guild_id})
         if result.deleted_count > 0:
             raise ctx.f.SUCCESS("Successfully **deleted sync**.")
 
@@ -123,6 +127,10 @@ class Sync(wkr.Module):
             raise ctx.f.ERROR("The bot **needs to have `administrator`** in the target guild.")
 
     @sync.command(aliases=("channels", "msg"))
+    @wkr.guild_only
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
+    @checks.is_premium()
     async def messages(self, ctx, direction, target: wkr.ChannelConverter):
         """
         Sync messages from one channel to another
@@ -154,7 +162,7 @@ class Sync(wkr.Module):
             webh = await ctx.client.create_webhook(wkr.Snowflake(target_id), name="sync")
             sync_id = utils.unique_id()
             try:
-                await ctx.bot.db.syncs.insert_one({
+                await ctx.bot.db.premium.syncs.insert_one({
                     "_id": sync_id,
                     "guilds": [guild.id, ctx.guild_id],
                     "type": SyncType.MESSAGES,
@@ -186,7 +194,7 @@ class Sync(wkr.Module):
         if msg.webhook_id:
             return
 
-        syncs = self.bot.db.syncs.find({"source": msg.channel_id, "type": SyncType.MESSAGES})
+        syncs = self.bot.db.premium.syncs.find({"source": msg.channel_id, "type": SyncType.MESSAGES})
         async for sync in syncs:
             webh = wkr.Webhook(sync["webhook"])
             try:
@@ -204,6 +212,10 @@ class Sync(wkr.Module):
                 traceback.print_exc()
 
     @sync.command()
+    @wkr.guild_only
+    @wkr.has_permissions(administrator=True)
+    @wkr.bot_has_permissions(administrator=True)
+    @checks.is_premium()
     async def bans(self, ctx, direction, target):
         """
         Sync bans from one guild to another
@@ -233,7 +245,7 @@ class Sync(wkr.Module):
         async def _create_ban_sync(target, source):
             sync_id = utils.unique_id()
             try:
-                await ctx.bot.db.syncs.insert_one({
+                await ctx.bot.db.premium.syncs.insert_one({
                     "_id": sync_id,
                     "guilds": [guild.id, ctx.guild_id],
                     "type": SyncType.BANS,
@@ -271,7 +283,7 @@ class Sync(wkr.Module):
     @wkr.Module.listener()
     async def on_guild_ban_add(self, _, data):
         user = wkr.User(data["user"])
-        syncs = self.bot.db.syncs.find({"source": data["guild_id"], "type": SyncType.BANS})
+        syncs = self.bot.db.premium.syncs.find({"source": data["guild_id"], "type": SyncType.BANS})
         # guild_ban_add doesn't receive the ban reason
         ban = None
         async for sync in syncs:
@@ -286,7 +298,7 @@ class Sync(wkr.Module):
     @wkr.Module.listener()
     async def on_guild_ban_remove(self, _, data):
         user = wkr.User(data["user"])
-        syncs = self.bot.db.syncs.find({"source": data["guild_id"], "type": SyncType.BANS})
+        syncs = self.bot.db.premium.syncs.find({"source": data["guild_id"], "type": SyncType.BANS})
         async for sync in syncs:
             try:
                 await self.bot.unban_user(wkr.Snowflake(sync["target"]), user)

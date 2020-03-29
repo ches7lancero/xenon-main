@@ -35,24 +35,19 @@ async def convert_and_insert(backup):
                 "roles": member["roles"],
                 "deaf": False,
                 "mute": False,
-                "user": {
-                    "id": member["id"],
-                    "username": member["name"],
-                    "discriminator": member["discriminator"]
-                }
+                "id": member["id"]
             }
             for member in data["members"]
         ],
         "bans": [
             {
                 "reason": ban.get("reason"),
-                "user": {
-                    "id": ban["user"]
-                }
+                "id": ban["user"]
             }
             for ban in data.get("bans", [])
         ],
         "channels": [],
+        "messages": {}
     }
 
     pos_counter = 0
@@ -85,31 +80,31 @@ async def convert_and_insert(backup):
                     "deny": wkr.Permissions(**{key: True for key, value in overwrites.items() if not value}).value
                 }
                 for obj_id, overwrites in channel.get("overwrites", {}).items()
-            ],
-            "messages": [
-                {
-                    "id": msg.get("id", "0"),
-                    "content": msg.get("content"),
-                    "author": {
-                        "id": msg["author"].get("id", "0"),
-                        "username": msg["author"]["name"],
-                        "discriminator": msg["author"]["discriminator"],
-                        "avatar": msg["author"]["avatar_url"].split("/")[-1].split(".")[0]
-                        if msg["author"].get("avatar_url") else None
-                    },
-                    "pinned": msg["pinned"],
-                    "attachments": [
-                        {
-                            "filename": attachment,
-                            "url": attachment
-                        }
-                        for attachment in msg["attachments"]
-                    ],
-                    "embeds": msg["embeds"]
-                }
-                for msg in channel.get("messages", [])
             ]
         })
+
+        new_data["messages"][channel["id"]] = [{
+                "id": msg.get("id", "0"),
+                "content": msg.get("content"),
+                "author": {
+                    "id": msg["author"].get("id", "0"),
+                    "username": msg["author"]["name"],
+                    "discriminator": msg["author"]["discriminator"],
+                    "avatar": msg["author"]["avatar_url"].split("/")[-1].split(".")[0]
+                    if msg["author"].get("avatar_url") else None
+                },
+                "pinned": msg["pinned"],
+                "attachments": [
+                    {
+                        "filename": attachment,
+                        "url": attachment
+                    }
+                    for attachment in msg["attachments"]
+                ],
+                "embeds": msg["embeds"]
+            }
+            for msg in reversed(channel.get("messages", []))
+        ]
 
         pos_counter += 1
 
@@ -169,7 +164,7 @@ async def convert_and_insert(backup):
 
 async def run():
     i = 0
-    async for backup in old_db.backups.find():
+    async for backup in old_db.backups.find({"_id": "iqhomtk9jk66tz57"}):
         i += 1
         if i % 1000 == 0:
             print(i)

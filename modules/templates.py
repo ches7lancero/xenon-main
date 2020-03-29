@@ -52,9 +52,9 @@ class Templates(wkr.Module):
     @wkr.Module.listener()
     async def on_load(self, *_, **__):
         await self.bot.db.templates.create_index([("_id", pymongo.TEXT), ("description", pymongo.TEXT)])
-        await self.bot.db.backups.create_index([("approved", pymongo.ASCENDING)])
-        await self.bot.db.backups.create_index([("featured", pymongo.ASCENDING)])
-        await self.bot.db.backups.create_index([("uses", pymongo.ASCENDING)])
+        await self.bot.db.templates.create_index([("approved", pymongo.ASCENDING)])
+        await self.bot.db.templates.create_index([("featured", pymongo.ASCENDING)])
+        await self.bot.db.templates.create_index([("uses", pymongo.ASCENDING)])
         # Subscribe to message_reaction_add on the approval guild
         self.APPROVAL_OPTIONS = {
             "✅": self._approve,

@@ -308,7 +308,8 @@ class BackupLoader:
             ("channels", self._load_channels),
             ("bans", self._load_bans),
             ("members", self._load_members),
-            ("channels", self._load_messages)
+            ("channels", self._load_messages),
+            ("settings", self._load_settings)
         )
 
         for key, loader in loaders:

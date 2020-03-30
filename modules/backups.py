@@ -245,7 +245,7 @@ class Backups(wkr.Module):
 
         __Examples__
 
-        ```{b.prefix}backup info oj1xky11871fzrbu```
+        ```{b.prefix}backup info 3zpssue46g```
         """
         backup = await ctx.client.db.backups.find_one({"_id": backup_id, "creator": ctx.author.id})
         if backup is None:

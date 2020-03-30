@@ -344,7 +344,11 @@ class Backups(wkr.Module):
 
         hours = 0
         for arg in interval:
-            count, unit = int(arg[:-1]), arg[-1]
+            try:
+                count, unit = int(arg[:-1]), arg[-1]
+            except (ValueError, IndexError):
+                continue
+
             multiplier = units.get(unit.lower(), 1)
             hours += count * multiplier
 

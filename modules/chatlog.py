@@ -257,3 +257,48 @@ class Chatlog(wkr.Module):
         """
         menu = ChatlogListMenu(ctx)
         await menu.start()
+
+    @chatlog.command(aliases=("i",))
+    @wkr.cooldown(5, 30)
+    async def info(self, ctx, chatlog_id):
+        """
+        Get information about a chatlog
+
+
+        __Arguments__
+
+        **chatlog_id**: The id of the chatlog
+
+
+        __Examples__
+
+        ```{b.prefix}chatlog info 3zpssue46g```
+        """
+        chatlog = await ctx.client.db.chatlogs.find_one({"_id": chatlog_id, "creator": ctx.author.id})
+        if chatlog is None:
+            raise ctx.f.ERROR(f"You have **no chatlog** with the id `{chatlog_id}`.")
+
+        first_msg = wkr.Snowflake(chatlog["data"][-1]["id"])
+        last_msg = wkr.Snowflake(chatlog["data"][0]["id"])
+
+        raise ctx.f.DEFAULT(embed={
+            "description": f"**Chatlog of <#{chatlog['channel']}>**",
+            "fields": [
+                {
+                    "name": "Created At",
+                    "value": utils.datetime_to_string(chatlog["timestamp"]) + " UTC",
+                    "inline": False
+                },
+                {
+                    "name": "Message Count",
+                    "value": len(chatlog["data"]),
+                    "inline": True
+                },
+                {
+                    "name": "Time Range",
+                    "value": f"`{utils.datetime_to_string(first_msg.created_at)}`- "
+                             f"`{utils.datetime_to_string(last_msg.created_at)}`",
+                    "inline": True
+                }
+            ]
+        })

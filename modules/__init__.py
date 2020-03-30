@@ -8,6 +8,7 @@ from .redis import Redis
 from .blacklist import Blacklist
 from .sync import Sync
 from .copy import Copy
+from .chatlog import Chatlog
 
 
-to_load = (Help, Admin, Backups, Basics, Templates, Build, Redis, Blacklist, Sync, Copy)
+to_load = (Help, Admin, Backups, Basics, Templates, Build, Redis, Blacklist, Sync, Copy, Chatlog)

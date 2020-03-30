@@ -27,7 +27,7 @@ class BackupListMenu(wkr.ListMenu):
         items = []
         async for backup in backups:
             items.append((
-                backup["_id"],
+                backup["_id"] + (" ⏲️" if backup.get("interval") else ""),
                 f"{backup['data']['name']} (`{utils.datetime_to_string(backup['timestamp'])} UTC`)"
             ))
 
@@ -199,7 +199,7 @@ class Backups(wkr.Module):
             return
 
         await ctx.client.db.backups.delete_many({"creator": ctx.author.id})
-        raise ctx.f.SUCCESS("Deleted all your backups.")
+        raise ctx.f.SUCCESS("Successfully **deleted all your backups**.")
 
     @backup.command(aliases=("ls",))
     @wkr.cooldown(1, 10)

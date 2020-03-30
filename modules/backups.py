@@ -61,22 +61,26 @@ class Backups(wkr.Module):
 
         __Examples__
 
-        ```{b.prefix}backup create```
+        No chatlog: ```{b.prefix}backup create```
+        50 messages per channel: ```{b.prefix}backup create 50```
         """
         max_backups = MAX_BACKUPS
         if ctx.premium == checks.PremiumLevel.ONE:
             max_backups = 50
+            chatlog = min(chatlog, 50)
 
         elif ctx.premium == checks.PremiumLevel.TWO:
-            max_backups = 150
+            max_backups = 100
+            chatlog = min(chatlog, 100)
 
         elif ctx.premium == checks.PremiumLevel.THREE:
-            max_backups = 300
+            max_backups = 250
+            chatlog = min(chatlog, 250)
 
         backup_count = await ctx.bot.db.backups.count_documents({"creator": ctx.author.id})
         if backup_count >= max_backups:
             raise ctx.f.ERROR(
-                f"You have **exceeded the maximum count** of backups. (`{backup_count}/{MAX_BACKUPS}`)\n"
+                f"You have **exceeded the maximum count** of backups. (`{backup_count}/{max_backups}`)\n"
                 f"You need to **delete old backups** with `{ctx.bot.prefix}backup delete <id>` or **buy "
                 f"[Xenon Premium](https://www.patreon.com/merlinfuchs)** to create new backups.."
             )

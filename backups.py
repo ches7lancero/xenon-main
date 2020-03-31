@@ -143,7 +143,10 @@ class BackupLoader:
             self.id_translator[role["id"]] = new.id
 
         for role in existing:
-            await self.client.delete_role(role, reason=self.reason)
+            try:
+                await self.client.delete_role(role, reason=self.reason)
+            except Exception:
+                pass
 
     async def _delete_channels(self):
         for channel in self.guild.channels:

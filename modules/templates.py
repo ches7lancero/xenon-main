@@ -178,7 +178,7 @@ class Templates(wkr.Module):
         backup = BackupLoader(ctx.client, guild, template["data"], reason="Template loaded by " + str(ctx.author))
 
         options = list(options)
-        options.append("!settings")
+        options.extend(["!settings", "!members"])
         await backup.load(0, **utils.backup_options(options))
 
     @template.command(aliases=("del", "remove", "rm"))

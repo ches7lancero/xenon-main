@@ -114,3 +114,12 @@ class Basics(wkr.Module):
                 }
             ]
         })
+
+    @wkr.Module.command(aliases=("tiers", "pro", "turbo"))
+    async def premium(self, ctx):
+        """
+        Get information about Xenon Premium
+        """
+        raise ctx.f.INFO("**Xenon Premium** is the **paid version** of Xenon.\n"
+                         "You can buy it on [patreon](https://www.patreon.com/merlinfuchs) "
+                         "and find a detailed list of perks [here](https://docs.discord.club/xenon/premium)")

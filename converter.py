@@ -4,7 +4,7 @@ import xenon_worker as wkr
 import traceback
 
 loop = asyncio.get_event_loop()
-old_db = AsyncIOMotorClient("mongodb://144.91.118.247:8899").xenon
+old_db = AsyncIOMotorClient("mongodb://144.91.118.247:8899", unicode_decode_error_handler='ignore').xenon
 new_db = AsyncIOMotorClient().xenon
 
 
@@ -164,7 +164,7 @@ async def convert_and_insert(backup):
 
 async def run():
     i = 0
-    async for backup in old_db.backups.find({"_id": "iqhomtk9jk66tz57"}):
+    async for backup in old_db.backups.find():
         i += 1
         if i % 1000 == 0:
             print(i)

@@ -65,6 +65,33 @@ class Templates(wkr.Module):
                                        "Templates are for everyone, not specifically for you, they must be generic.")
         }
 
+    async def _crossload_template(self, template_id):
+        try:
+            data = await self.client.http.request(wkr.Route("GET", "/guilds/templates/" + template_id))
+            guild = data["serialized_source_guild"]
+            return {
+                "_id": data["name"],
+                "description": data["description"],
+                "creator": data["creator_id"],
+                "uses": data["usage_count"],
+                "approved": True,
+                "featured": False,
+                "data": {
+                    "id": 0,
+                    "roles": [
+                        {
+                            "position": pos,
+                            **r
+                        }
+                        for pos, r in enumerate(guild.pop("roles", []))
+                    ],
+                    "mfa_level": 0,
+                    **guild
+                }
+            }
+        except wkr.NotFound:
+            return None
+
     @wkr.Module.command(aliases=("temp", "tpl"))
     async def template(self, ctx):
         """
@@ -149,6 +176,9 @@ class Templates(wkr.Module):
         """
         template = await ctx.client.db.templates.find_one({"_id": name})
         if template is None:
+            template = await self._crossload_template(name)
+
+        if template is None:
             raise ctx.f.ERROR(f"There is **no template** with the name `{name}`.")
 
         warning_msg = await ctx.f_send("Are you sure that you want to load this template?\n"
@@ -223,6 +253,9 @@ class Templates(wkr.Module):
         ```{b.prefix}template info starter```
         """
         template = await ctx.client.db.templates.find_one({"_id": name})
+        if template is None:
+            template = await self._crossload_template(name)
+
         if template is None:
             raise ctx.f.ERROR(f"There is **no template** with the name `{name}`.")
 

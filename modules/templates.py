@@ -66,6 +66,7 @@ class Templates(wkr.Module):
         }
 
     async def _crossload_template(self, template_id):
+        template_id = template_id.strip("/").split("/")[-1]
         try:
             data = await self.client.http.request(wkr.Route("GET", "/guilds/templates/" + template_id))
             guild = data["serialized_source_guild"]

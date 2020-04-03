@@ -11,7 +11,10 @@ import checks
 
 
 class TemplateListMenu(wkr.ListMenu):
-    embed_kwargs = {"title": "Template List"}
+    embed_kwargs = {
+        "title": "Template List",
+        "description": "You can find more and more recent template on https://templates.xenon.bot/"
+    }
 
     def __init__(self, ctx, search):
         super().__init__(ctx)

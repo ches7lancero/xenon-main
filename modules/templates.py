@@ -117,6 +117,7 @@ class Templates(wkr.Module):
 
         ```{b.prefix}template create starter A basic template for new servers```
         """
+        raise ctx.f.ERROR("This command is disabled. Please use https://templates.xenon.bot to add new templates.")
         if len(description) < 30:
             raise ctx.f.ERROR("The template **description** must be at least **30 characters** long.")
 

@@ -311,7 +311,6 @@ class BackupLoader:
         self.options.update(**options)
         await self.client.edit_guild(self.guild, name="Loading ...")
         loaders = (
-            ("settings", self._load_settings),
             ("delete_roles", self._clean_members),
             ("roles", self._load_roles),
             ("delete_channels", self._delete_channels),
@@ -319,6 +318,7 @@ class BackupLoader:
             ("bans", self._load_bans),
             ("members", self._load_members),
             ("channels", self._load_messages),
+            ("settings", self._load_settings)
         )
 
         for key, loader in loaders:
@@ -333,8 +333,6 @@ class BackupLoader:
         await self.client.edit_guild(self.guild, name=self.data["name"])
 
     async def load(self, chatlog, **options):
-        task = self.client.schedule(self._load(chatlog, **options))
-
         redis_key = f"loaders:{self.guild.id}"
         if await self.client.redis.exists(redis_key):
             # Another loader is already running
@@ -342,6 +340,7 @@ class BackupLoader:
                                       "You can't start more than one at the same time.\n"
                                       "You have to **wait until it's done**.")
 
+        task = self.client.schedule(self._load(chatlog, **options))
         while not task.done():
             await self.client.redis.setex(redis_key, 10, 1)
             await asyncio.sleep(5)

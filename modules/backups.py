@@ -383,7 +383,7 @@ class Backups(wkr.Module):
             keep = 4
 
         elif ctx.premium == checks.PremiumLevel.THREE:
-            hours = max(hours, 2)
+            hours = max(hours, 4)
             keep = 8
 
         else:

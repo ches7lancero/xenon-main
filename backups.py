@@ -94,7 +94,7 @@ class BackupLoader:
 
             try:
                 await self.client.edit_member(self.guild, member, roles=roles)
-            except Exception:
+            except wkr.DiscordException:
                 pass
 
     async def _load_roles(self):
@@ -121,7 +121,7 @@ class BackupLoader:
                         await self.client.edit_role(to_edit, **role, reason=self.reason)
                         self.id_translator[role["id"]] = to_edit.id
 
-                    except Exception:
+                    except wkr.DiscordException:
                         traceback.print_exc()
 
                 continue
@@ -132,7 +132,7 @@ class BackupLoader:
                     await self.client.edit_role(to_edit, **role, reason=self.reason)
                     self.id_translator[role["id"]] = to_edit.id
                     continue
-                except Exception:
+                except wkr.DiscordException:
                     traceback.print_exc()
 
             try:
@@ -151,14 +151,14 @@ class BackupLoader:
         for role in existing:
             try:
                 await self.client.delete_role(role, reason=self.reason)
-            except Exception:
+            except wkr.DiscordException:
                 pass
 
     async def _delete_channels(self):
         for channel in self.guild.channels:
             try:
                 await self.client.delete_channel(channel, reason=self.reason)
-            except:
+            except wkr.DiscordException:
                 traceback.print_exc()
 
     async def _load_channels(self):
@@ -206,7 +206,7 @@ class BackupLoader:
         for ban in self.data.get("bans", []):
             try:
                 await self.client.ban_user(self.guild, wkr.Snowflake(ban["id"]), reason=ban["reason"])
-            except Exception:
+            except wkr.DiscordException:
                 pass
 
     async def _load(self, **options):
@@ -227,7 +227,7 @@ class BackupLoader:
                     await loader()
                 except wkr.CommandError:
                     raise
-                except Exception:
+                except wkr.DiscordException:
                     traceback.print_exc()
 
         await self.client.edit_guild(self.guild, name=self.data["name"])
@@ -247,6 +247,7 @@ class BackupLoader:
             await asyncio.sleep(5)
             if not await self.client.redis.exists(redis_key):
                 # The loading key got deleted, probably manual cancellation
+                task.cancel()
                 raise self.client.f.ERROR("The **loading process was cancelled**. Did you cancel it manually?")
 
         return task.result()

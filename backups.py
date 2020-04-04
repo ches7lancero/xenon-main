@@ -129,6 +129,12 @@ class BackupLoader:
         async for member in self.client.iter_members(self.guild, 10 ** 6):
             roles = [r.id for r in member.roles_from_guild(self.guild) if r.managed]
             self._member_cache[member.id] = roles
+
+            if len(roles) == len(member.roles):
+                # This can either be the case if the member has no / only managed roles or if the guild cache failed
+                # There is no reason to try to edit member in both of these cases, it will fail or make no difference
+                continue
+
             try:
                 await self.client.edit_member(self.guild, member, roles=roles)
             except Exception:
@@ -300,7 +306,7 @@ class BackupLoader:
         for _channel in self.data["channels"]:
             self.client.schedule(_load_in_channel(_channel))
 
-    async def load(self, chatlog, **options):
+    async def _load(self, chatlog, **options):
         self.chatlog = chatlog
         self.options.update(**options)
         await self.client.edit_guild(self.guild, name="Loading ...")
@@ -325,3 +331,22 @@ class BackupLoader:
                     traceback.print_exc()
 
         await self.client.edit_guild(self.guild, name=self.data["name"])
+
+    async def load(self, chatlog, **options):
+        task = self.client.schedule(self._load(chatlog, **options))
+
+        redis_key = f"loaders:{self.guild.id}"
+        if await self.client.redis.exists(redis_key):
+            # Another loader is already running
+            raise self.client.f.ERROR("There is **already** a backup or template loader **running**. "
+                                      "You can't start more than one at the same time.\n"
+                                      "You have to **wait until it's done**.")
+
+        while not task.done():
+            await self.client.redis.setex(redis_key, 10, 1)
+            await asyncio.sleep(5)
+            if not await self.client.redis.exists(redis_key):
+                # The loading key got deleted, probably manual cancellation
+                raise self.client.f.ERROR("The **loading process was cancelled**. Did you cancel it manually?")
+
+        return task.result()

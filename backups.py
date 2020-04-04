@@ -270,7 +270,7 @@ class BackupLoader:
                     nick=member.get("nick"),
                     roles=roles
                 )
-            except Exception:
+            except wkr.DiscordException:
                 pass
 
     async def _load_messages(self):
@@ -298,7 +298,7 @@ class BackupLoader:
                 except wkr.NotFound:
                     break
 
-                except Exception:
+                except wkr.DiscordException:
                     pass
 
             await self.client.delete_webhook(webhook)

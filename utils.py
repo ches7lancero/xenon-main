@@ -42,6 +42,9 @@ def datetime_to_string(dt: datetime):
 
 def timedelta_to_string(td: timedelta):
     seconds = td.total_seconds()
+    if seconds == 0:
+        return "0s"
+
     units = (
         ("w", 7 * 24 * 60 * 60),
         ("d", 24 * 60 * 60),

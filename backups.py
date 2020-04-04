@@ -209,7 +209,7 @@ class BackupLoader:
             except Exception:
                 pass
 
-    async def load(self, **options):
+    async def _load(self, **options):
         self.options.update(**options)
         await self.client.edit_guild(self.guild, name="Loading ...")
         loaders = (
@@ -231,3 +231,22 @@ class BackupLoader:
                     traceback.print_exc()
 
         await self.client.edit_guild(self.guild, name=self.data["name"])
+
+    async def load(self, **options):
+        task = self.client.schedule(self._load(**options))
+
+        redis_key = f"loaders:{self.guild.id}"
+        if await self.client.redis.exists(redis_key):
+            # Another loader is already running
+            raise self.client.f.ERROR("There is **already** a backup or template loader **running**. "
+                                      "You can't start more than one at the same time.\n"
+                                      "You have to **wait until it's done**.")
+
+        while not task.done():
+            await self.client.redis.setex(redis_key, 10, 1)
+            await asyncio.sleep(5)
+            if not await self.client.redis.exists(redis_key):
+                # The loading key got deleted, probably manual cancellation
+                raise self.client.f.ERROR("The **loading process was cancelled**. Did you cancel it manually?")
+
+        return task.result()

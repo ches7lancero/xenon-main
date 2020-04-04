@@ -213,12 +213,12 @@ class BackupLoader:
         self.options.update(**options)
         await self.client.edit_guild(self.guild, name="Loading ...")
         loaders = (
-            ("settings", self._load_settings),
             ("delete_roles", self._clean_members),
             ("roles", self._load_roles),
             ("delete_channels", self._delete_channels),
             ("channels", self._load_channels),
-            ("bans", self._load_bans)
+            ("bans", self._load_bans),
+            ("settings", self._load_settings)
         )
 
         for key, loader in loaders:

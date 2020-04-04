@@ -86,6 +86,12 @@ class BackupLoader:
         async for member in self.client.iter_members(self.guild, 10**6):
             roles = [r.id for r in member.roles_from_guild(self.guild) if r.managed]
             self._member_cache[member.id] = roles
+
+            if len(roles) == len(member.roles):
+                # This can either be the case if the member has no / only managed roles or if the guild cache failed
+                # There is no reason to try to edit member in both of these cases, it will fail or make no difference
+                continue
+
             try:
                 await self.client.edit_member(self.guild, member, roles=roles)
             except Exception:

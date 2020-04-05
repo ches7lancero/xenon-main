@@ -59,8 +59,8 @@ class Templates(wkr.Module):
         await self.bot.db.backups.create_index([("featured", pymongo.ASCENDING)])
         await self.bot.db.backups.create_index([("uses", pymongo.ASCENDING)])
         # Subscribe to message_reaction_add on the approval guild
-        shard_id = await self.client.guild_shard(self.APPROVAL_GUILD)
-        await self.bot.subscribe(f"{shard_id}.message_reaction_add", shared=True)
+        # shard_id = await self.client.guild_shard(self.APPROVAL_GUILD)
+        # await self.bot.subscribe(f"{shard_id}.message_reaction_add", shared=True)
         self.APPROVAL_OPTIONS = {
             "✅": self._approve,
             "⭐": self._feature,

@@ -365,7 +365,14 @@ class Backups(wkr.Module):
         }
 
         hours = 0
+        chatlog = 0
         for arg in interval:
+            try:
+                chatlog = int(arg)
+                continue
+            except ValueError:
+                pass
+
             try:
                 count, unit = int(arg[:-1]), arg[-1]
             except (ValueError, IndexError):
@@ -375,18 +382,22 @@ class Backups(wkr.Module):
             hours += count * multiplier
 
         if ctx.premium == checks.PremiumLevel.ONE:
+            chatlog = min(chatlog, 50)
             hours = max(hours, 12)
             keep = 2
 
         elif ctx.premium == checks.PremiumLevel.TWO:
+            chatlog = min(chatlog, 100)
             hours = max(hours, 8)
             keep = 4
 
         elif ctx.premium == checks.PremiumLevel.THREE:
+            chatlog = min(chatlog, 250)
             hours = max(hours, 4)
             keep = 8
 
         else:
+            chatlog = min(chatlog, 0)
             hours = max(hours, 24)
             keep = 1
 
@@ -397,7 +408,8 @@ class Backups(wkr.Module):
             "last": now,
             "next": now + td,
             "keep": keep,
-            "interval": hours
+            "interval": hours,
+            "chatlog": chatlog
         }}, upsert=True)
 
         raise ctx.f.SUCCESS("Successful **enabled the backup interval**.\nThe first backup will be created in "
@@ -423,7 +435,7 @@ class Backups(wkr.Module):
         else:
             raise ctx.f.ERROR(f"The backup interval is not enabled.")
 
-    async def run_interval_backup(self, guild_id, keep=1):
+    async def run_interval_backup(self, guild_id, keep=1, chatlog=0):
         guild = await self.bot.get_full_guild(guild_id)
         if guild is None:
             return
@@ -437,7 +449,7 @@ class Backups(wkr.Module):
                 await self.bot.db.backups.delete_one({"_id": backup["_id"]})
 
         backup = BackupSaver(self.bot, guild)
-        await backup.save()
+        await backup.save(chatlog=chatlog)
 
         await self.bot.db.backups.insert_one({
             "_id": utils.unique_id(),
@@ -452,7 +464,11 @@ class Backups(wkr.Module):
         to_backup = self.bot.db.intervals.find({"next": {"$lt": datetime.utcnow()}})
         async for interval in to_backup:
             guild_id = interval["_id"]
-            self.bot.schedule(self.run_interval_backup(guild_id, keep=interval.get("keep", 1)))
+            self.bot.schedule(self.run_interval_backup(
+                guild_id,
+                keep=interval.get("keep", 1),
+                chatlog=interval.get("chatlog", 0)
+            ))
             await self.bot.db.intervals.update_one({"_id": guild_id}, {"$set": {
                 "next": interval["next"] + timedelta(hours=interval["interval"])
             }})

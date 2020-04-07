@@ -3,7 +3,6 @@ from datetime import datetime
 import pymongo
 import asyncio
 import io
-import traceback
 
 import checks
 import utils
@@ -96,7 +95,7 @@ class Chatlog(wkr.Module):
                 break
 
             except Exception:
-                traceback.print_exc()
+                pass
 
         await self.client.delete_webhook(webhook)
 

@@ -2,6 +2,8 @@ import xenon_worker as wkr
 from datetime import datetime
 import pymongo
 import asyncio
+import io
+import traceback
 
 import checks
 import utils
@@ -66,6 +68,20 @@ class Chatlog(wkr.Module):
         webhook = await self.client.create_webhook(wkr.Snowflake(channel_id), name="backup")
         for msg in reversed(data[:count]):
             author = wkr.User(msg["author"])
+
+            attachments = msg.get("attachments", [])
+            files = []
+
+            async def _fetch_attachment(attachment):
+                async with self.bot.session.get(attachment["url"]) as resp:
+                    if resp.status == 200:
+                        fp = io.BytesIO(await resp.read())
+                        files.append(wkr.File(fp, filename=attachment["filename"]))
+
+            file_tasks = [self.bot.schedule(_fetch_attachment(att)) for att in attachments]
+            if file_tasks:
+                await asyncio.wait(file_tasks, return_when=asyncio.ALL_COMPLETED)
+
             try:
                 await self.client.execute_webhook(
                     webhook,
@@ -73,13 +89,14 @@ class Chatlog(wkr.Module):
                     username=author.name,
                     avatar_url=author.avatar_url,
                     allowed_mentions={"parse": []},
+                    files=files,
                     **msg
                 )
             except wkr.NotFound:
                 break
 
             except Exception:
-                pass
+                traceback.print_exc()
 
         await self.client.delete_webhook(webhook)
 

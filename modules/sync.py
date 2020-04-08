@@ -3,6 +3,8 @@ import pymongo
 import pymongo.errors
 from enum import Enum, IntEnum
 import traceback
+import asyncio
+import io
 
 import checks
 import utils
@@ -194,6 +196,19 @@ class Sync(wkr.Module):
         if msg.webhook_id:
             return
 
+        attachments = msg.attachments
+        files = []
+
+        async def _fetch_attachment(attachment):
+            async with self.bot.session.get(attachment["url"]) as resp:
+                if resp.status == 200:
+                    fp = io.BytesIO(await resp.read())
+                    files.append(wkr.File(fp, filename=attachment["filename"]))
+
+        file_tasks = [self.bot.schedule(_fetch_attachment(att)) for att in attachments]
+        if file_tasks:
+            await asyncio.wait(file_tasks, return_when=asyncio.ALL_COMPLETED)
+
         syncs = self.bot.db.premium.syncs.find({"source": msg.channel_id, "type": SyncType.MESSAGES})
         async for sync in syncs:
             webh = wkr.Webhook(sync["webhook"])
@@ -202,6 +217,7 @@ class Sync(wkr.Module):
                     webh,
                     username=msg.author.name,
                     avatar_url=msg.author.avatar_url,
+                    files=files,
                     **msg.to_dict(),
                     allowed_mentions={"parse": []}
                 )

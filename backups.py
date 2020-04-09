@@ -112,6 +112,8 @@ class BackupLoader:
         remaining = list(sorted(self.data["roles"], key=lambda r: r["position"], reverse=True))
         for role in remaining:
             role.pop("guild_id", None)
+            role.pop("position", None)
+            role.pop("managed", None)
 
             # Default role (@everyone)
             if role["id"] == self.data["id"]:
@@ -145,6 +147,10 @@ class BackupLoader:
                                           "discord.\nYou can either **wait 24 hours** until the limit was reset or "
                                           "create enough roles manually for Xenon to use. This way, Xenon does not "
                                           "need to create new roles, but can edit the existing ones.")
+
+            except wkr.DiscordException:
+                traceback.print_exc()
+                continue
 
             self.id_translator[role["id"]] = new.id
 

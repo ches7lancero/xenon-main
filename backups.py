@@ -1,6 +1,7 @@
 import traceback
 import xenon_worker as wkr
 import asyncio
+import io
 
 
 class Options:
@@ -292,6 +293,20 @@ class BackupLoader:
             webhook = await self.client.create_webhook(wkr.Snowflake(new_id), name="backup")
             for msg in reversed(messages[:self.chatlog]):
                 author = wkr.User(msg["author"])
+
+                attachments = msg.get("attachments", [])
+                files = []
+
+                async def _fetch_attachment(attachment):
+                    async with self.client.session.get(attachment["url"]) as resp:
+                        if resp.status == 200:
+                            fp = io.BytesIO(await resp.read())
+                            files.append(wkr.File(fp, filename=attachment["filename"]))
+
+                file_tasks = [self.client.schedule(_fetch_attachment(att)) for att in attachments]
+                if file_tasks:
+                    await asyncio.wait(file_tasks, return_when=asyncio.ALL_COMPLETED)
+
                 try:
                     await self.client.execute_webhook(
                         webhook,
@@ -299,6 +314,7 @@ class BackupLoader:
                         username=author.name,
                         avatar_url=author.avatar_url,
                         allowed_mentions={"parse": []},
+                        files=files,
                         **msg
                     )
                 except wkr.NotFound:

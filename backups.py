@@ -197,16 +197,22 @@ class BackupLoader:
             key=lambda c: c.get("position")
         )
         for channel in no_parent:
-            new = await self.client.create_channel(self.guild, **_tune_channel(channel), reason=self.reason)
-            self.id_translator[channel["id"]] = new.id
+            try:
+                new = await self.client.create_channel(self.guild, **_tune_channel(channel), reason=self.reason)
+                self.id_translator[channel["id"]] = new.id
+            except wkr.DiscordException:
+                traceback.print_exc()
 
         has_parent = sorted(
             filter(lambda c: c.get("parent_id") is not None, self.data["channels"]),
             key=lambda c: c["position"]
         )
         for channel in has_parent:
-            new = await self.client.create_channel(self.guild, **_tune_channel(channel), reason=self.reason)
-            self.id_translator[channel["id"]] = new.id
+            try:
+                new = await self.client.create_channel(self.guild, **_tune_channel(channel), reason=self.reason)
+                self.id_translator[channel["id"]] = new.id
+            except wkr.DiscordException:
+                traceback.print_exc()
 
     async def _load_bans(self):
         for ban in self.data.get("bans", []):

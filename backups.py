@@ -122,12 +122,18 @@ class BackupLoader:
 
         self._member_cache = {}
 
+        self.status = None
+
     async def _load_settings(self):
+        self.status = "loading settings"
+
         self.data.pop("guild_id", None)
         await self.client.edit_guild(self.guild, **self.data, reason=self.reason)
 
     async def _clean_members(self):
-        async for member in self.client.iter_members(self.guild, 10 ** 6):
+        self.status = "cleaning members"
+
+        async for member in self.client.iter_members(self.guild, 10**6):
             roles = [r.id for r in member.roles_from_guild(self.guild) if r.managed]
             self._member_cache[member.id] = roles
 
@@ -142,6 +148,8 @@ class BackupLoader:
                 pass
 
     async def _load_roles(self):
+        self.status = "loading roles"
+
         bot_member = await self.client.get_bot_member(self.guild.id)
         top_role = list(sorted(bot_member.roles_from_guild(self.guild), key=lambda r: r.position))[-1]
 
@@ -205,6 +213,8 @@ class BackupLoader:
                 pass
 
     async def _delete_channels(self):
+        self.status = "deleting channels"
+
         for channel in self.guild.channels:
             try:
                 await self.client.delete_channel(channel, reason=self.reason)
@@ -212,6 +222,8 @@ class BackupLoader:
                 traceback.print_exc()
 
     async def _load_channels(self):
+        self.status = "loading channels"
+
         def _tune_channel(channel):
             channel.pop("guild_id", None)
 
@@ -259,6 +271,8 @@ class BackupLoader:
                 traceback.print_exc()
 
     async def _load_bans(self):
+        self.status = "loading bans"
+
         for ban in self.data.get("bans", []):
             try:
                 await self.client.ban_user(self.guild, wkr.Snowflake(ban["id"]), reason=ban["reason"])
@@ -266,6 +280,8 @@ class BackupLoader:
                 pass
 
     async def _load_members(self):
+        self.status = "loading members"
+
         for member in self.data.get("members", []):
             roles = self._member_cache.get(member["id"])
             if roles is None:
@@ -287,6 +303,8 @@ class BackupLoader:
                 pass
 
     async def _load_messages(self):
+        self.status = "loading messages"
+
         async def _load_in_channel(channel):
             messages = self.data.get("messages", {}).get(channel["id"], [])
             if len(messages) <= 0:
@@ -361,6 +379,8 @@ class BackupLoader:
         await self.client.edit_guild(self.guild, name=self.data["name"])
 
     async def load(self, chatlog, **options):
+        self.status = "starting"
+
         redis_key = f"loaders:{self.guild.id}"
         if await self.client.redis.exists(redis_key):
             # Another loader is already running
@@ -370,7 +390,7 @@ class BackupLoader:
 
         task = self.client.schedule(self._load(chatlog, **options))
         while not task.done():
-            await self.client.redis.setex(redis_key, 10, 1)
+            await self.client.redis.setex(redis_key, 10, self.status)
             await asyncio.sleep(5)
             if not await self.client.redis.exists(redis_key):
                 # The loading key got deleted, probably manual cancellation

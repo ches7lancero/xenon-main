@@ -169,6 +169,8 @@ class BackupLoader:
                 pass
 
     async def _delete_channels(self):
+        self.status = "deleting channels"
+
         for channel in self.guild.channels:
             try:
                 await self.client.delete_channel(channel, reason=self.reason)

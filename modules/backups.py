@@ -40,6 +40,21 @@ class Backups(wkr.Module):
         await self.bot.db.backups.create_index([("creator", pymongo.ASCENDING)])
         await self.bot.db.backups.create_index([("timestamp", pymongo.ASCENDING)])
         await self.bot.db.backups.create_index([("data.id", pymongo.ASCENDING)])
+        await self.bot.db.backups.create_index([("msg_retention", pymongo.ASCENDING)])
+
+    @wkr.Module.task(hours=24)
+    async def message_retention(self):
+        await self.bot.db.update_many(
+            {
+                "msg_retention": True,
+                "timestamp": {
+                    "$lte": datetime.utcnow() - timedelta(days=30)
+                }
+            },
+            {
+                "$unset": "data.messages"
+            }
+        )
 
     @wkr.Module.command(aliases=("backups", "bu"))
     async def backup(self, ctx):
@@ -93,6 +108,7 @@ class Backups(wkr.Module):
         backup_id = utils.unique_id()
         await ctx.bot.db.backups.insert_one({
             "_id": backup_id,
+            "msg_retention": True,
             "creator": ctx.author.id,
             "timestamp": datetime.utcnow(),
             "data": backup.data

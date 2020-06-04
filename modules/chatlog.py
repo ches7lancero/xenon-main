@@ -1,5 +1,5 @@
 import xenon_worker as wkr
-from datetime import datetime
+from datetime import datetime, timedelta
 import pymongo
 import asyncio
 import io
@@ -36,6 +36,16 @@ class Chatlog(wkr.Module):
     async def on_load(self, *_, **__):
         await self.bot.db.chatlogs.create_index([("creator", pymongo.ASCENDING)])
         await self.bot.db.chatlogs.create_index([("timestamp", pymongo.ASCENDING)])
+        await self.bot.db.backups.create_index([("msg_retention", pymongo.ASCENDING)])
+
+    @wkr.Module.task(hours=24)
+    async def message_retention(self):
+        await self.bot.db.delete_many({
+            "msg_retention": True,
+            "timestamp": {
+                "$lte": datetime.utcnow() - timedelta(days=30)
+            }
+        })
 
     @wkr.Module.command(aliases=("chatlogs", "cl"))
     async def chatlog(self, ctx):
@@ -139,6 +149,7 @@ class Chatlog(wkr.Module):
         chatlog_id = utils.unique_id()
         await ctx.bot.db.chatlogs.insert_one({
             "_id": chatlog_id,
+            "msg_retention": True,
             "creator": ctx.author.id,
             "timestamp": datetime.utcnow(),
             "channel": ctx.channel_id,

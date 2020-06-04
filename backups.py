@@ -98,7 +98,10 @@ class BackupSaver:
         }
 
         for _, saver in savers.items():
-            await saver()
+            try:
+                await saver()
+            except wkr.DiscordException:
+                pass
 
 
 class BackupLoader:

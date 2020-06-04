@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       token: ${{ secrets.GITHUB_TOKEN }}
-      package: docker.pkg.github.com/magic-bots/xenon-main/xenon-main
+      package: docker.pkg.github.com/xenon-bot/xenon-main/xenon-main
     steps:
       - uses: actions/checkout@v2
       - name: Login to Github packages

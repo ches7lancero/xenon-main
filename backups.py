@@ -345,7 +345,7 @@ class BackupLoader:
                     break
 
                 except wkr.DiscordException:
-                    pass
+                    continue
 
             await self.client.delete_webhook(webhook)
 

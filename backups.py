@@ -86,39 +86,23 @@ class BackupLoader:
         self.data.pop("guild_id", None)
         await self.client.edit_guild(self.guild, **self.data, reason=self.reason)
 
-    async def _clean_members(self):
-        self.status = "cleaning members"
+    async def _delete_roles(self):
+        self.status = "deleting roles"
 
-        async for member in self.client.iter_members(self.guild, 10**6):
-            roles = [r.id for r in member.roles_from_guild(self.guild) if r.managed]
-            self._member_cache[member.id] = roles
-
-            if len(roles) == len(member.roles):
-                # This can either be the case if the member has no / only managed roles or if the guild cache failed
-                # There is no reason to try to edit member in both of these cases, it will fail or make no difference
-                continue
-
+        existing = [r for r in filter(
+            lambda r: not r.managed and not r.is_default(),
+            self.guild.roles
+        )],
+        for role in self.guild.roles:
             try:
-                await self.client.edit_member(self.guild, member, roles=roles)
+                await self.client.delete_role(role, reason=self.reason)
             except wkr.DiscordException:
                 pass
 
     async def _load_roles(self):
         self.status = "loading roles"
-
-        bot_member = await self.client.get_bot_member(self.guild.id)
-        top_role = list(sorted(bot_member.roles_from_guild(self.guild), key=lambda r: r.position))[-1]
-
-        existing = sorted(
-            [r for r in filter(
-                lambda r: not r.managed and not r.is_default() and r.position < top_role.position,
-                self.guild.roles
-            )],
-            key=lambda r: r.position,
-            reverse=True
-        )
-        remaining = list(sorted(self.data["roles"], key=lambda r: r["position"], reverse=True))
-        for role in remaining:
+        roles = list(sorted(self.data["roles"], key=lambda r: r["position"], reverse=True))
+        for role in roles:
             role.pop("guild_id", None)
             role.pop("position", None)
             role.pop("managed", None)
@@ -136,15 +120,6 @@ class BackupLoader:
 
                 continue
 
-            if len(existing) > 0:
-                try:
-                    to_edit = existing.pop(0)
-                    await self.client.edit_role(to_edit, **role, reason=self.reason)
-                    self.id_translator[role["id"]] = to_edit.id
-                    continue
-                except wkr.DiscordException:
-                    traceback.print_exc()
-
             try:
                 new = await asyncio.wait_for(
                     self.client.create_role(self.guild, **role, reason=self.reason),
@@ -161,12 +136,6 @@ class BackupLoader:
                 continue
 
             self.id_translator[role["id"]] = new.id
-
-        for role in existing:
-            try:
-                await self.client.delete_role(role, reason=self.reason)
-            except wkr.DiscordException:
-                pass
 
     async def _delete_channels(self):
         self.status = "deleting channels"
@@ -239,7 +208,7 @@ class BackupLoader:
         self.options.update(**options)
         await self.client.edit_guild(self.guild, name="Loading ...")
         loaders = (
-            ("delete_roles", self._clean_members),
+            ("delete_roles", self._delete_roles),
             ("roles", self._load_roles),
             ("delete_channels", self._delete_channels),
             ("channels", self._load_channels),

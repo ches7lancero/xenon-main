@@ -359,7 +359,7 @@ class Backups(wkr.Module):
         await ctx.bot.db.intervals.update_one({"_id": ctx.guild_id}, {"$set": {
             "_id": ctx.guild_id,
             "last": now,
-            "next": now + td,
+            "next": now,
             "interval": hours
         }}, upsert=True)
 

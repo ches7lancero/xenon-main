@@ -70,23 +70,26 @@ class BackupSaver:
         messages = self.data["messages"] = {}
 
         for channel in self.guild.channels:
-            messages[channel.id] = [
-                {
-                    "id": message.id,
-                    "content": message.content,
-                    "author": message.author.user.to_dict(),
-                    "attachments": [
-                        {
-                            "filename": attachment["filename"],
-                            "url": attachment["url"]
-                        }
-                        for attachment in message.attachments
-                    ],
-                    "pinned": message.pinned,
-                    "embeds": message.embeds
-                }
-                async for message in self.client.iter_messages(channel, self.chatlog)
-            ]
+            try:
+                messages[channel.id] = [
+                    {
+                        "id": message.id,
+                        "content": message.content,
+                        "author": message.author.user.to_dict(),
+                        "attachments": [
+                            {
+                                "filename": attachment["filename"],
+                                "url": attachment["url"]
+                            }
+                            for attachment in message.attachments
+                        ],
+                        "pinned": message.pinned,
+                        "embeds": message.embeds
+                    }
+                    async for message in self.client.iter_messages(channel, self.chatlog)
+                ]
+            except wkr.DiscordException:
+                pass
 
     async def save(self, chatlog=0, **options):
         self.chatlog = chatlog

@@ -118,7 +118,10 @@ class Backups(wkr.Module):
             raise ctx.f.ERROR(f"You have **no backup** with the id `{backup_id}`.")
 
         warning_msg = await ctx.f_send("Are you sure that you want to load this backup?\n"
-                                       "__**All channels and roles will get replaced!**__", f=ctx.f.WARNING)
+                                       f"Please put the managed role called `{ctx.bot.user.name}` above all other "
+                                       f"roles before clicking the ✅ reaction.\n\n"
+                                       "__**All channels and roles will get replaced!**__\n\n"
+                                       "*Also keep in mind that you can only load up to 250 roles per day.*", f=ctx.f.WARNING)
         reactions = ("✅", "❌")
         for reaction in reactions:
             await ctx.client.add_reaction(warning_msg, reaction)

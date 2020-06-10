@@ -89,13 +89,17 @@ class BackupLoader:
     async def _delete_roles(self):
         self.status = "deleting roles"
 
-        existing = [r for r in filter(
-            lambda r: not r.managed and not r.is_default(),
-            self.guild.roles
-        )],
-        for role in self.guild.roles:
+        existing = [
+            r for r in self.guild.roles
+            if not r.managed and not r.is_default()
+        ]
+
+        for role in sorted(existing, key=lambda r: r.position):
             try:
                 await self.client.delete_role(role, reason=self.reason)
+            except wkr.Forbidden:
+                break
+
             except wkr.DiscordException:
                 pass
 

@@ -181,9 +181,9 @@ class BackupLoader:
                 )
             except asyncio.TimeoutError:
                 raise self.client.f.ERROR("Seems like you **hit** the `250 per 24h` **role creation limit** of "
-                                          "discord.\nYou can either **wait 24 hours** until the limit was reset or "
-                                          "create enough roles manually for Xenon to use. This way, Xenon does not "
-                                          "need to create new roles, but can edit the existing ones.")
+                                          "discord.\nYou have to **wait for 24 hours** until you can load another "
+                                          "backup or template.\n\n"
+                                          "*This is a discord limitation and there is no way around it.*")
 
             except wkr.DiscordException:
                 traceback.print_exc()

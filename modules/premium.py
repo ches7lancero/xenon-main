@@ -17,3 +17,11 @@ class Premium(wkr.Module):
         """
         await ctx.f_send("This command can **only** be used with **Xenon Premium**.", f=ctx.f.INFO)
         await ctx.invoke("premium")
+
+    @wkr.Module.command()
+    async def copy(self, ctx):
+        """
+        Copy servers without creating a backup
+        """
+        await ctx.f_send("This command can **only** be used with **Xenon Premium**.", f=ctx.f.INFO)
+        await ctx.invoke("premium")

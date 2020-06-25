@@ -10,4 +10,4 @@ from .copy import Copy
 from .chatlog import Chatlog
 
 
-to_load = (Help, Admin, Backups, Basics, Templates, Build, Redis, Blacklist, Sync, Copy, Chatlog)
+to_load = (Help, Admin, Backups, Basics, Templates, Redis, Blacklist, Sync, Copy, Chatlog)

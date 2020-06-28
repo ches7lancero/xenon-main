@@ -56,6 +56,8 @@ class Backups(wkr.Module):
     async def create(self, ctx):
         """
         Create a backup
+        
+        Get more help on the [wiki](https://wiki.xenon.bot/backups#creating-a-backup).
 
 
         __Examples__
@@ -99,6 +101,8 @@ class Backups(wkr.Module):
     async def load(self, ctx, backup_id, *options):
         """
         Load a backup
+        
+        Get more help on the [wiki](https://wiki.xenon.bot/backups#loading-a-backup).
 
 
         __Arguments__
@@ -152,6 +156,8 @@ class Backups(wkr.Module):
     async def delete(self, ctx, backup_id):
         """
         Delete one of your backups
+        
+        Get more help on the [wiki](https://wiki.xenon.bot/backups#deleting-a-backup).
         __**This cannot be undone**__
 
 
@@ -280,6 +286,8 @@ class Backups(wkr.Module):
     async def interval(self, ctx, *interval):
         """
         Manage automated backups
+        
+        Get more help on the [wiki](https://wiki.xenon.bot/en/backups#automated-backups-interval).
 
 
         __Arguments__

@@ -99,7 +99,7 @@ class Basics(wkr.Module):
                 },
                 {
                     "name": "Discord",
-                    "value": f"[Click Here](https://discord.club/discord)",
+                    "value": f"[Click Here](https://xenon.bot/discord)",
                     "inline": True
                 },
                 {
@@ -122,4 +122,4 @@ class Basics(wkr.Module):
         """
         raise ctx.f.INFO("**Xenon Premium** is the **paid version** of Xenon.\n"
                          "You can buy it on [patreon](https://www.patreon.com/merlinfuchs) "
-                         "and find a detailed list of perks [here](https://docs.xenon.bot/premium)")
+                         "and find a detailed list of perks [here](https://wiki.xenon.bot/premium)")

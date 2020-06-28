@@ -120,7 +120,7 @@ class Templates(wkr.Module):
 
         ```{b.prefix}template create starter A basic template for new servers```
         """
-        raise ctx.f.ERROR("This command is disabled. Please use https://templates.xenon.bot to add new templates.")
+        raise ctx.f.ERROR("This command is disabled. Please use https://templates.xenon.bot to add new templates, you can find help on the [wiki](https://wiki.xenon.bot/en/templates#creating-a-template) for how to create new templates.")
         if len(description) < 30:
             raise ctx.f.ERROR("The template **description** must be at least **30 characters** long.")
 
@@ -166,7 +166,7 @@ class Templates(wkr.Module):
     @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
     async def load(self, ctx, name, *options):
         """
-        Load a template
+        Load a template, you can find more help on the [wiki](https://wiki.xenon.bot/templates#loading-a-template).
 
 
         __Arguments__
@@ -236,7 +236,7 @@ class Templates(wkr.Module):
     @wkr.cooldown(1, 10)
     async def list(self, ctx, *, search):
         """
-        Get a list of your backups
+        Get a list of the available templates, you should also check out the [templates](https://templates.xenon.bot) site.
 
 
         __Examples__

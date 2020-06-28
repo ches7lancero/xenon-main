@@ -55,7 +55,7 @@ class Backups(wkr.Module):
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def create(self, ctx):
         """
-        Create a backup
+        Create a backup, get more help on the [wiki](https://wiki.xenon.bot/backups#creating-a-backup).
 
 
         __Examples__
@@ -98,7 +98,7 @@ class Backups(wkr.Module):
     @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
     async def load(self, ctx, backup_id, *options):
         """
-        Load a backup
+        Load a backup, get more help on the [wiki](https://wiki.xenon.bot/backups#loading-a-backup).
 
 
         __Arguments__
@@ -151,7 +151,7 @@ class Backups(wkr.Module):
     @wkr.cooldown(5, 30)
     async def delete(self, ctx, backup_id):
         """
-        Delete one of your backups
+        Delete one of your backups, get more help on the [wiki](https://wiki.xenon.bot/backups#deleting-a-backup).
         __**This cannot be undone**__
 
 
@@ -279,7 +279,7 @@ class Backups(wkr.Module):
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
     async def interval(self, ctx, *interval):
         """
-        Manage automated backups
+        Manage automated backups, get more help on the [wiki](https://wiki.xenon.bot/en/backups#automated-backups-interval).
 
 
         __Arguments__

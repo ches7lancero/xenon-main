@@ -17,7 +17,7 @@ class Help(wkr.Module):
         prefix = ctx.bot.prefix
         embed = {
             "fields": [],
-            "description": "You can find more information in the [docs](https://docs.xenon.bot).\n",
+            "description": "You can find more information on the [wiki](https://wiki.xenon.bot).\n",
             "footer": {
                 "text": "Use '%shelp [command]' to get more information about a specific command." % prefix
             }

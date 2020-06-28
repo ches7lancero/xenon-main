@@ -166,7 +166,9 @@ class Templates(wkr.Module):
     @wkr.cooldown(1, 60, bucket=wkr.CooldownType.GUILD)
     async def load(self, ctx, name, *options):
         """
-        Load a template, you can find more help on the [wiki](https://wiki.xenon.bot/templates#loading-a-template).
+        Load a template
+        
+        You can find more help on the [wiki](https://wiki.xenon.bot/templates#loading-a-template).
 
 
         __Arguments__

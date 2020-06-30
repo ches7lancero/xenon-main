@@ -1,6 +1,7 @@
 import xenon_worker as wkr
 
 import checks
+import utils
 from backups import BackupSaver, BackupLoader
 
 
@@ -45,8 +46,8 @@ class Copy(wkr.Module):
 
         await ctx.client.edit_message(status_msg, **ctx.f.format(f"**Starting to copy** ...", f=ctx.f.WORKING))
 
-        BackupLoader(ctx.client, target_guild, backup.data, reason="Copied by " + str(ctx.author))
-
+        loader = BackupLoader(ctx.client, target_guild, backup.data, reason="Copied by " + str(ctx.author))
+        await loader.load(chatlog, **utils.backup_options(options))
 
     @copy.command(aliases=('msg',))
     @wkr.guild_only

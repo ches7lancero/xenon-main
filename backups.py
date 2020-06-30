@@ -126,8 +126,6 @@ class BackupLoader:
         self.id_translator = {data["id"]: guild.id}
         self.reason = reason
 
-        self._member_cache = {}
-
         self.status = None
 
     async def _load_settings(self):
@@ -261,25 +259,28 @@ class BackupLoader:
     async def _load_members(self):
         self.status = "loading members"
 
-        for member in self.data.get("members", []):
-            roles = self._member_cache.get(member["id"])
-            if roles is None:
+        to_load = {m["id"]: m for m in self.data.get("members", [])}
+        async for member in self.client.iter_members(self.guild, 10 ** 6):
+            data = to_load.get(member.id)
+            if data is None:
                 continue
 
-            for role in member["roles"]:
+            roles = list(member.roles)
+            for role in data["roles"]:
                 new_id = self.id_translator.get(role)
                 if new_id is not None:
                     roles.append(new_id)
 
-            try:
-                await self.client.edit_member(
-                    self.guild,
-                    wkr.Snowflake(member["id"]),
-                    nick=member.get("nick"),
-                    roles=roles
-                )
-            except wkr.DiscordException:
-                pass
+            if len(roles) != len(member.roles):
+                try:
+                    await self.client.edit_member(
+                        self.guild,
+                        member,
+                        nick=data.get("nick"),
+                        roles=roles
+                    )
+                except wkr.DiscordException:
+                    traceback.print_exc()
 
     async def _load_messages(self):
         self.status = "loading messages"

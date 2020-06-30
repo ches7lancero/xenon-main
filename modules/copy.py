@@ -1,4 +1,5 @@
 import xenon_worker as wkr
+import asyncio
 
 import checks
 import utils
@@ -27,9 +28,18 @@ class Copy(wkr.Module):
         if bot_member is None:
             raise wkr.BotMissingPermissions(("administrator",))
 
-        permissions = bot_member.permissions_for_guild(source_guild)
-        if not permissions.administrator:
+        bot_permissions = bot_member.permissions_for_guild(source_guild)
+        if not bot_permissions.administrator:
             raise wkr.BotMissingPermissions(("administrator",))
+
+        try:
+            member = await ctx.client.fetch_member(source_guild, ctx.author.id)
+        except wkr.NotFound:
+            raise wkr.Permissions(("administrator",))
+
+        permissions = member.permissions_for_guild(source_guild)
+        if not permissions.administrator:
+            raise wkr.Permissions(("administrator",))
 
         if ctx.premium == checks.PremiumLevel.ONE:
             chatlog = min(chatlog, 50)
@@ -39,6 +49,32 @@ class Copy(wkr.Module):
 
         elif ctx.premium == checks.PremiumLevel.THREE:
             chatlog = min(chatlog, 250)
+
+        warning_msg = await ctx.f_send("Are you sure that you want to copy this guild?\n"
+                                       f"Please put the managed role called `{ctx.bot.user.name}` above all other "
+                                       f"roles before clicking the ✅ reaction.\n\n"
+                                       "__**All channels and roles will get replaced!**__\n\n"
+                                       "*Also keep in mind that you can only copy up to 250 roles per day.*", f=ctx.f.WARNING)
+        reactions = ("✅", "❌")
+        for reaction in reactions:
+            await ctx.client.add_reaction(warning_msg, reaction)
+
+        try:
+            data, = await ctx.client.wait_for(
+                "message_reaction_add",
+                ctx.shard_id,
+                check=lambda d: d["message_id"] == warning_msg.id and
+                                d["user_id"] == ctx.author.id and
+                                d["emoji"]["name"] in reactions,
+                timeout=60
+            )
+        except asyncio.TimeoutError:
+            await ctx.client.delete_message(warning_msg)
+            return
+
+        await ctx.client.delete_message(warning_msg)
+        if data["emoji"]["name"] != "✅":
+            return
 
         status_msg = await ctx.f_send("**Preparing to copy** ...", f=ctx.f.WORKING)
         backup = BackupSaver(ctx.client, source_guild)

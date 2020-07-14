@@ -2,6 +2,7 @@ import xenon_worker as wkr
 import utils
 import asyncio
 import pymongo
+from pymongo import errors as mongoerrors
 from datetime import datetime, timedelta
 import random
 import checks
@@ -108,13 +109,19 @@ class Backups(wkr.Module):
         await backup.save(chatlog)
 
         backup_id = utils.unique_id()
-        await ctx.bot.db.backups.insert_one({
-            "_id": backup_id,
-            "msg_retention": True,
-            "creator": ctx.author.id,
-            "timestamp": datetime.utcnow(),
-            "data": backup.data
-        })
+        try:
+            await ctx.bot.db.backups.insert_one({
+                "_id": backup_id,
+                "msg_retention": True,
+                "creator": ctx.author.id,
+                "timestamp": datetime.utcnow(),
+                "data": backup.data
+            })
+        except mongoerrors.DocumentTooLarge:
+            raise ctx.f.ERROR(
+                f"This backups **exceeds** the maximum size of **16 Megabyte**. Your server probably has a lot of "
+                f"members and channels containing messages. Try to create a new backup with less messages (chatlog)."
+            )
 
         embed = ctx.f.format(f"Successfully **created backup** with the id `{backup_id}`.", f=ctx.f.SUCCESS)["embed"]
         embed.setdefault("fields", []).append({

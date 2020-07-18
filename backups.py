@@ -221,7 +221,8 @@ class BackupLoader:
 
             overwrites = channel.get("permission_overwrites", [])
             for overwrite in overwrites:
-                overwrite["id"] = self.id_translator.get(overwrite["id"], overwrite["id"])
+                if overwrite["id"] in self.id_translator:
+                    overwrite["id"] = self.id_translator[overwrite["id"]]
 
             return channel
 

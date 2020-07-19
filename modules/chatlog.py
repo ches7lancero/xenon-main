@@ -170,7 +170,7 @@ class Chatlog(wkr.Module):
     @wkr.bot_has_permissions(administrator=True)
     @checks.is_premium()
     @wkr.cooldown(1, 10, bucket=wkr.CooldownType.GUILD)
-    async def load(self, ctx, chatlog_id, count: int = 100):
+    async def load(self, ctx, chatlog_id, count: int = 1000):
         """
         Load messages from a chatlog
 

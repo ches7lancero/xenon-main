@@ -6,6 +6,8 @@ from pymongo import errors as mongoerrors
 from datetime import datetime, timedelta
 import random
 import checks
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+import json
 
 from backups import BackupSaver, BackupLoader
 
@@ -42,6 +44,7 @@ class Backups(wkr.Module):
         await self.bot.db.backups.create_index([("timestamp", pymongo.ASCENDING)])
         await self.bot.db.backups.create_index([("data.id", pymongo.ASCENDING)])
         await self.bot.db.backups.create_index([("msg_retention", pymongo.ASCENDING)])
+        self.grid_fs = AsyncIOMotorGridFSBucket(self.bot.db, "backup_blobs", 8000000)
 
     @wkr.Module.task(hours=24)
     async def message_retention(self):
@@ -501,10 +504,37 @@ class Backups(wkr.Module):
                 **options
             })
         except mongoerrors.DocumentTooLarge:
-            raise self.bot.f.ERROR(
-                f"This backups **exceeds** the maximum size of **16 Megabyte**. Your server probably has a lot of "
-                f"members and channels containing messages. Try to create a new backup with less messages (chatlog)."
-            )
+            # The backup exceeds the size limit of 16MB
+            # Upload members and messages to gridfs to reduce document size
+
+            blob = json.dumps({
+                "messages": data.get("messages"),
+                "members": data.get("members")
+            }).encode("utf-8")
+            data["messages"] = True
+            data["members"] = True
+
+            await self.grid_fs.upload_from_stream_with_id(backup_id, backup_id, blob)
+            await self.bot.db.backups.insert_one({
+                "_id": backup_id,
+                "msg_retention": True,
+                "creator": creator_id,
+                "timestamp": datetime.utcnow(),
+                "data": data,
+                **options
+            })
 
     async def _retrieve_backup(self, creator_id, backup_id):
-        return await self.bot.db.backups.find_one({"_id": backup_id, "creator": creator_id})
+        data = await self.bot.db.backups.find_one({"_id": backup_id, "creator": creator_id})
+        if data is None:
+            return None
+
+        # Yes, this expression makes sense here
+        if data.get("messages") is True or data.get("members") is True:
+            stream = await self.grid_fs.open_download_stream(backup_id)
+            blob = await stream.read()
+            blob_data = json.loads(blob.decode("utf-8"))
+            data["messages"] = blob_data.get("messages", [])
+            data["members"] = blob_data.get("members", [])
+
+        return data

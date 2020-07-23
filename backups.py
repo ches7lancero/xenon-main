@@ -281,7 +281,7 @@ class BackupLoader:
                         roles=roles
                     )
                 except wkr.DiscordException:
-                    traceback.print_exc()
+                    pass
 
     async def _load_messages(self):
         self.status = "loading messages"

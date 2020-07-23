@@ -44,7 +44,7 @@ class Backups(wkr.Module):
         await self.bot.db.backups.create_index([("timestamp", pymongo.ASCENDING)])
         await self.bot.db.backups.create_index([("data.id", pymongo.ASCENDING)])
         await self.bot.db.backups.create_index([("msg_retention", pymongo.ASCENDING)])
-        self.grid_fs = AsyncIOMotorGridFSBucket(self.bot.db, "backup_blobs", 8000000)
+        self.grid_fs = AsyncIOMotorGridFSBucket(self.bot.db, "backup_blobs", chunk_size_bytes=8000000)
 
     @wkr.Module.task(hours=24)
     async def message_retention(self):
@@ -525,11 +525,12 @@ class Backups(wkr.Module):
             })
 
     async def _retrieve_backup(self, creator_id, backup_id):
-        data = await self.bot.db.backups.find_one({"_id": backup_id, "creator": creator_id})
-        if data is None:
+        doc = await self.bot.db.backups.find_one({"_id": backup_id, "creator": creator_id})
+        if doc is None:
             return None
 
         # Yes, this expression makes sense here
+        data = doc["data"]
         if data.get("messages") is True or data.get("members") is True:
             stream = await self.grid_fs.open_download_stream(backup_id)
             blob = await stream.read()
@@ -537,4 +538,4 @@ class Backups(wkr.Module):
             data["messages"] = blob_data.get("messages", [])
             data["members"] = blob_data.get("members", [])
 
-        return data
+        return doc

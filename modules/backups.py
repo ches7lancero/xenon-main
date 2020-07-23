@@ -185,6 +185,12 @@ class Backups(wkr.Module):
 
         guild = await ctx.get_full_guild()
         backup = BackupLoader(ctx.client, guild, backup_d["data"], reason="Backup loaded by " + str(ctx.author))
+
+        # Inject previous id translators if available
+        translator = await ctx.bot.db.id_translators.find_one({"guild_id": ctx.guild_id, "backup_id": backup_id})
+        if translator is not None:
+            backup.id_translator.update(translator["ids"])
+
         await backup.load(chatlog, **utils.backup_options(options))
         await ctx.bot.db.id_translators.update_one(
             {

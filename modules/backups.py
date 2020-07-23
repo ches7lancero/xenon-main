@@ -109,19 +109,7 @@ class Backups(wkr.Module):
         await backup.save(chatlog)
 
         backup_id = utils.unique_id()
-        try:
-            await ctx.bot.db.backups.insert_one({
-                "_id": backup_id,
-                "msg_retention": True,
-                "creator": ctx.author.id,
-                "timestamp": datetime.utcnow(),
-                "data": backup.data
-            })
-        except mongoerrors.DocumentTooLarge:
-            raise ctx.f.ERROR(
-                f"This backups **exceeds** the maximum size of **16 Megabyte**. Your server probably has a lot of "
-                f"members and channels containing messages. Try to create a new backup with less messages (chatlog)."
-            )
+        await self._store_backup(ctx.author.id, backup_id, backup.data)
 
         embed = ctx.f.format(f"Successfully **created backup** with the id `{backup_id}`.", f=ctx.f.SUCCESS)["embed"]
         embed.setdefault("fields", []).append({
@@ -157,7 +145,7 @@ class Backups(wkr.Module):
         Only roles: ```{b.prefix}backup load oj1xky11871fzrbu !* roles```
         Everything but bans: ```{b.prefix}backup load oj1xky11871fzrbu !bans```
         """
-        backup_d = await ctx.client.db.backups.find_one({"_id": backup_id, "creator": ctx.author.id})
+        backup_d = await self._retrieve_backup(ctx.author.id, backup_id)
         if backup_d is None:
             raise ctx.f.ERROR(f"You have **no backup** with the id `{backup_id}`.")
 
@@ -280,7 +268,7 @@ class Backups(wkr.Module):
 
         ```{b.prefix}backup info 3zpssue46g```
         """
-        backup = await ctx.client.db.backups.find_one({"_id": backup_id, "creator": ctx.author.id})
+        backup = await self._retrieve_backup(ctx.author.id, backup_id)
         if backup is None:
             raise ctx.f.ERROR(f"You have **no backup** with the id `{backup_id}`.")
 
@@ -486,13 +474,7 @@ class Backups(wkr.Module):
         backup = BackupSaver(self.bot, guild)
         await backup.save(chatlog=chatlog)
 
-        await self.bot.db.backups.insert_one({
-            "_id": utils.unique_id(),
-            "creator": guild.owner_id,
-            "timestamp": datetime.utcnow(),
-            "interval": True,
-            "data": backup.data
-        })
+        await self._store_backup(guild.owner_id, utils.unique_id(), backup.data, interval=True)
 
     @wkr.Module.task(minutes=random.randint(5, 15))
     async def interval_task(self):
@@ -507,3 +489,22 @@ class Backups(wkr.Module):
             await self.bot.db.intervals.update_one({"_id": guild_id}, {"$set": {
                 "next": interval["next"] + timedelta(hours=interval["interval"])
             }})
+
+    async def _store_backup(self, creator_id, backup_id, data, **options):
+        try:
+            await self.bot.db.backups.insert_one({
+                "_id": backup_id,
+                "msg_retention": True,
+                "creator": creator_id,
+                "timestamp": datetime.utcnow(),
+                "data": data,
+                **options
+            })
+        except mongoerrors.DocumentTooLarge:
+            raise self.bot.f.ERROR(
+                f"This backups **exceeds** the maximum size of **16 Megabyte**. Your server probably has a lot of "
+                f"members and channels containing messages. Try to create a new backup with less messages (chatlog)."
+            )
+
+    async def _retrieve_backup(self, creator_id, backup_id):
+        return await self.bot.db.backups.find_one({"_id": backup_id, "creator": creator_id})

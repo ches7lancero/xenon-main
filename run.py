@@ -8,4 +8,4 @@ bot = Xenon(
     rabbit_url=env.get("RABBIT_URL") or "amqp://guest:guest@localhost/",
     redis_url=env.get("REDIS_URL") or "redis://localhost/"
 )
-bot.run(token=env.get("TOKEN"), shared_queue="main")
+bot.run(token=env.get("NzM3NTY0Nzg3MDI1NjQxNTMz.Xx_MvA.UELHQ9-FCFi1mY2IhmZVNnZGstE"), shared_queue="main")
